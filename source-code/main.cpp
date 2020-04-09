@@ -66,12 +66,7 @@ bool parsePara(int argc, char **argv){
         }
     }
 
-    if(elf_file_name == nullptr){
-        return false;
-    }
-    else{
-        return true;
-    }
+    return elf_file_name != nullptr;
 }
 
 void printUsage(){
@@ -147,7 +142,7 @@ int main(int argc, char **argv){
     }
 
     MemoryManager memory;
-    BranchPredictor branch_predictor;
+    BranchPredictor branch_predictor(strategy);
     Simulator simulator(&memory, &branch_predictor);
 
     ELFIO::elfio reader;
@@ -170,7 +165,6 @@ int main(int argc, char **argv){
     simulator.is_single_step = single_step;
     simulator.is_verbose = verbose;
     simulator.is_dump_history = dump_history;
-    simulator.branch_predictor->strategy = strategy;
     simulator.initStack(0x80000000, 0x400000);
 //    printf("%d %d %d %d\n",single_step, verbose, dump_history, strategy);
     uint64_t pc = reader.get_entry();

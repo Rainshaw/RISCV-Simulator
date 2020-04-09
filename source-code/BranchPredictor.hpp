@@ -23,7 +23,7 @@ private:
         WEAK_TAKEN       = 1,
         WEAK_NOT_TAKEN   = 2,
         STRONG_NOT_TAKEN = 3,
-    } predbuf[PRED_BUF_SIZE];
+    } predbuf[PRED_BUF_SIZE]{};
 
 
 public:
@@ -41,7 +41,7 @@ public:
         "Branch Prediction Buff",
     };
 
-    BranchPredictor();
+    explicit BranchPredictor(Strategy strategy);
     ~BranchPredictor();
 
     bool predict(uint32_t pc, int64_t offset);

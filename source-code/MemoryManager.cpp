@@ -14,22 +14,22 @@ using std::string;
 
 MemoryManager::MemoryManager(){
     // memset(this->memory, nullptr, sizeof(uint8_t***)*1024);
-    for(uint16_t i = 0; i < 1024; i++){
-        this->memory[i] = nullptr;
+    for(auto & i : this->memory){
+        i = nullptr;
     }
 }
 
 
 MemoryManager::~MemoryManager(){
-    for(uint16_t i = 0; i < 1024; i++){
-        if(this->memory[i]){
+    for(auto & i : this->memory){
+        if(i){
             for(uint16_t j = 0; j < 1024; j++){
-                if(this->memory[i][j])
-                    delete[] this->memory[i][j];
-                this->memory[i][j] = nullptr;
+                if(i[j])
+                    delete[] i[j];
+                i[j] = nullptr;
             }
-            delete[] this->memory[i];
-            this->memory[i] = nullptr;
+            delete[] i;
+            i = nullptr;
         }
     }
 }
@@ -37,18 +37,18 @@ MemoryManager::~MemoryManager(){
 
 uint16_t MemoryManager::getFirstIndex(uint32_t addr){
     // 使用头10位做一级索引
-    return ((addr>>22) & 0x3FF); //0x3FF = 0b11 1111 1111
+    return ((addr>>22u) & 0x3FFu); //0x3FF = 0b11 1111 1111
 }
 
 
 uint16_t MemoryManager::getSecondIndex(uint32_t addr){
     // 使用11至20位做二级索引
-    return ((addr>>12) & 0x3FF);
+    return ((addr>>12u) & 0x3FFu);
 }
 
 
 uint16_t MemoryManager::getPageOffset(uint32_t addr){
-    return (addr & 0xFFF);
+    return (addr & 0xFFFu);
 }
 
 
@@ -89,20 +89,20 @@ string MemoryManager::dumpMemory(){
         if(this->memory[i] == nullptr){
             continue;
         }
-        sprintf(buf, "0x%x-0x%x\n", i<<22, (i+1)<<22);
+        sprintf(buf, "0x%x-0x%x\n", i<<22u, (i+1u)<<22u);
         dump_str += buf;
         for(uint16_t j=0; j < 1024; j++){
             if(this->memory[i][j] == nullptr){
                 continue;
             }
-            sprintf(buf, "\t0x%x-0x%x\n", ((i<<22)+(j<<12)),
-                    ((i<<22)+((j+1)<<12)));
+            sprintf(buf, "\t0x%x-0x%x\n", ((i<<22u)+(j<<12u)),
+                    ((i<<22u)+((j+1u)<<12u)));
             dump_str += buf;
             
             for(uint16_t k = 0; k < 1024; k++){
                 if(this->memory[i][j][k] == 0)
                     continue;
-                sprintf(buf, "\t\t0x%x: 0x%x\n", ((i<<22)+(j<<12)+k), this->memory[i][j][k]);
+                sprintf(buf, "\t\t0x%x: 0x%x\n", ((i<<22u)+(j<<12u)+k), this->memory[i][j][k]);
                 dump_str += buf;
             }
         }
@@ -117,12 +117,12 @@ void MemoryManager::printInfo(){
         if(this->memory[i] == nullptr){
             continue;
         }
-        printf("0x%x-0x%x:\n", i<<22, (i+1)<<22);
+        printf("0x%x-0x%x:\n", i<<22u, (i+1u)<<22u);
         for(uint16_t j=0; j < 1024; j++){
             if(this->memory[i][j] == nullptr){
                 continue;
             }
-            printf("\t0x%x-0x%x:\n", (i<<22)+(j<<12), (i<<22)+((j+1)<<12));
+            printf("\t0x%x-0x%x:\n", (i<<22u)+(j<<12u), (i<<22u)+((j+1u)<<12u));
         }
     }
 }
@@ -199,7 +199,7 @@ bool MemoryManager::setLong(uint32_t addr, uint64_t val){
 uint16_t MemoryManager::getShort(uint32_t addr){
     uint16_t b1 = this->getByte(addr);
     uint16_t b2 = this->getByte(addr + 1);
-    return b1 + (b2 << 8);
+    return b1 + (b2 << 8u);
 }
 
 
@@ -208,7 +208,7 @@ uint32_t MemoryManager::getInt(uint32_t addr){
     uint32_t b2 = this->getByte(addr + 1);
     uint32_t b3 = this->getByte(addr + 2);
     uint32_t b4 = this->getByte(addr + 3);
-    return b1 + (b2 << 8) + (b3 << 16) + (b4 << 24);
+    return b1 + (b2 << 8u) + (b3 << 16u) + (b4 << 24u);
 }
 
 
@@ -221,5 +221,5 @@ uint64_t MemoryManager::getLong(uint32_t addr){
     uint64_t b6 = this->getByte(addr + 5);
     uint64_t b7 = this->getByte(addr + 6);
     uint64_t b8 = this->getByte(addr + 7);
-    return b1 + (b2 << 8) + (b3 << 16) + (b4 << 24) + (b5 << 32) + (b6 << 40) + (b7 << 48) + (b8 << 56);
+    return b1 + (b2 << 8u) + (b3 << 16u) + (b4 << 24u) + (b5 << 32u) + (b6 << 40u) + (b7 << 48u) + (b8 << 56u);
 }

@@ -1,4 +1,4 @@
-make_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.5)
 
 project(RISCV-Simulator)
 
@@ -9,7 +9,7 @@ include_directories(${CMAKE_SOURCE_DIR}/include)
 
 add_executable(
     Sim
-    source-code/Main.cpp
+    source-code/main.cpp
     source-code/MemoryManager.cpp
     source-code/Simulator.cpp
     source-code/BranchPredictor.cpp

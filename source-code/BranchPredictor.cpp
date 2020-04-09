@@ -10,15 +10,16 @@
 //#include "assert.h"
 using std::string;
 
-BranchPredictor::BranchPredictor(){
-    for(int i = 0; i< PRED_BUF_SIZE; i++){
+BranchPredictor::BranchPredictor(Strategy strategy){
+    this->strategy = strategy;
+    for(auto & i : this->predbuf){
         //memset(this->predbuf, 1, sizeof(PredictorState)*PRED_BUF_SIZE)
-        this->predbuf[i] = WEAK_TAKEN;
+        i = WEAK_TAKEN;
     }
 }
 
 
-BranchPredictor::~BranchPredictor(){}
+BranchPredictor::~BranchPredictor()= default;
 
 
 bool BranchPredictor::predict(uint32_t pc, int64_t offset){
@@ -31,17 +32,11 @@ bool BranchPredictor::predict(uint32_t pc, int64_t offset){
             return offset<0;
         default:
             //assert(this->strategy == BPB);
-            PredictorState state = this->predbuf[pc & 0xFFF];
-            if(state == STRONG_TAKEN){
+            PredictorState state = this->predbuf[pc & 0xFFFu];
+            if(state == STRONG_TAKEN || state == WEAK_TAKEN){
                 return true;
             }
-            else if(state == WEAK_TAKEN){
-                return true;
-            }
-            else if(state == WEAK_NOT_TAKEN){
-                return false;
-            }
-            else if(state == STRONG_NOT_TAKEN){
+            else if(state == WEAK_NOT_TAKEN || state == STRONG_NOT_TAKEN){
                 return false;
             }
             break;
@@ -52,7 +47,7 @@ bool BranchPredictor::predict(uint32_t pc, int64_t offset){
 
 void BranchPredictor::update(uint32_t pc, bool branch){
     if(strategy == BPB){
-        int index = pc & 0xFFF;
+        int index = (int)(pc & 0xFFFu);
         PredictorState state = this->predbuf[index];
         if(branch){
             if (state == STRONG_TAKEN){

@@ -1,1 +1,5 @@
 .DS_Store
+/cmake-build-debug/
+.idea
+/riscv-elf/
+/build/

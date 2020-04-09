@@ -73,7 +73,7 @@ void Simulator::fetch(){
         this->raiseError("PC 0x%llx is illegal!\n", pc);
     }
     if(e_reg.out.opcode == OP_JALR){
-        pc = (e_reg.out.val1 + e_reg.out.imm) & ~1LL;
+        pc = (uint64_t)(e_reg.out.val1 + e_reg.out.imm) & ~1LLu;
     }
     
     if(m_reg.out.opcode == OP_BRANCH){
@@ -95,11 +95,11 @@ void Simulator::fetch(){
     }
     InstSet inst_t = UNKNOWN;
     
-    uint32_t opcode = inst & 0x7f;
-    uint32_t func = (inst >> 12) & 0x7;
-    uint32_t rs1 = (inst>>15) & 0x1f;
-    uint32_t rs2 = (inst>>20) & 0x1f;
-    uint32_t rd = (inst>>7) & 0x1f;
+    uint32_t opcode = inst & 0x7fu;
+    uint32_t func = (inst >> 12u) & 0x7u;
+    uint32_t rs1 = (inst>>15u) & 0x1fu;
+    uint32_t rs2 = (inst>>20u) & 0x1fu;
+    uint32_t rd = (inst>>7u) & 0x1fu;
     int32_t imm = 0;
     
     if(inst == 0){
@@ -119,91 +119,91 @@ void Simulator::fetch(){
             // R-Type
             switch (func) {
                 case 0x0:
-                    if(inst>>25 == 0x00)
+                    if(inst>>25u == 0x00)
                         inst_t = ADD;
-                    else if(inst>>25 == 0x01)
+                    else if(inst>>25u == 0x01)
                         inst_t = MUL;
-                    else if(inst>>25 == 0x20)
+                    else if(inst>>25u == 0x20)
                         inst_t = SUB;
                     else
-                        raiseError("Invaild RR Instruction at %x, The Func7 field is %x, The Func3 Field %x is invaild\n", pc, inst>>25, func);
+                        raiseError("Invaild RR Instruction at %x, The Func7 field is %x, The Func3 Field %x is invaild\n", pc, inst>>25u, func);
                     break;
                 case 0x1:
-                    if(inst>>25 == 0x00)
+                    if(inst>>25u == 0x00)
                         inst_t = SLL;
-                    else if(inst>>25 == 0x01)
+                    else if(inst>>25u == 0x01)
                         inst_t = MULH;
                     else
-                        raiseError("Invaild RR Instruction at %x, The Func7 field is %x, The Func3 Field %x is invaild\n", pc, inst>>25, func);
+                        raiseError("Invaild RR Instruction at %x, The Func7 field is %x, The Func3 Field %x is invaild\n", pc, inst>>25u, func);
                     break;
                 case 0x2:
-                    if(inst>>25 == 0x00)
+                    if(inst>>25u == 0x00)
                         inst_t = SLT;
-                    else if(inst>>25 == 0x01)
+                    else if(inst>>25u == 0x01)
                         inst_t = MULHSU;
                     else
-                        raiseError("Invaild RR Instruction at %x, The Func7 field is %x, The Func3 Field %x is invaild\n", pc, inst>>25, func);
+                        raiseError("Invaild RR Instruction at %x, The Func7 field is %x, The Func3 Field %x is invaild\n", pc, inst>>25u, func);
                     break;
                 case 0x3:
-                    if(inst>>25 == 0x00)
+                    if(inst>>25u == 0x00)
                         inst_t = SLTU;
-                    else if(inst>>25 == 0x01)
+                    else if(inst>>25u == 0x01)
                         inst_t = MULHU;
                     else
-                        raiseError("Invaild RR Instruction at %x, The Func7 field is %x, The Func3 Field %x is invaild\n", pc, inst>>25, func);
+                        raiseError("Invaild RR Instruction at %x, The Func7 field is %x, The Func3 Field %x is invaild\n", pc, inst>>25u, func);
                     break;
                 case 0x4:
-                    if(inst>>25 == 0x00)
+                    if(inst>>25u == 0x00)
                         inst_t = XOR;
-                    else if(inst>>25 == 0x01)
+                    else if(inst>>25u == 0x01)
                         inst_t = DIV;
                     else
-                        this->raiseError("Invaild RR Instruction at %x, The Func7 field is %x, The Func3 Field %x is invaild\n", pc, inst>>25, func);
+                        this->raiseError("Invaild RR Instruction at %x, The Func7 field is %x, The Func3 Field %x is invaild\n", pc, inst>>25u, func);
                     break;
                 case 0x5:
-                    if(inst>>25 == 0x00)
+                    if(inst>>25u == 0x00)
                         inst_t = SRL;
-                    else if(inst>>25 == 0x20)
+                    else if(inst>>25u == 0x20)
                         inst_t = SRA;
-                    else if(inst>>25 == 0x01)
+                    else if(inst>>25u == 0x01)
                         inst_t = DIVU;
                     else
-                        this->raiseError("Invaild RR Instruction at %x, The Func7 field is %x, The Func3 Field %x is invaild\n", pc, inst>>25, func);
+                        this->raiseError("Invaild RR Instruction at %x, The Func7 field is %x, The Func3 Field %x is invaild\n", pc, inst>>25u, func);
                     break;
                 case 0x6:
-                    if(inst>>25 == 0x00)
+                    if(inst>>25u == 0x00)
                         inst_t = OR;
-                    else if(inst>>25 == 0x01)
+                    else if(inst>>25u == 0x01)
                         inst_t = REM;
                     else
-                        this->raiseError("Invaild RR Instruction at %x, The Func7 field is %x, The Func3 Field %x is invaild\n", pc, inst>>25, func);
+                        this->raiseError("Invaild RR Instruction at %x, The Func7 field is %x, The Func3 Field %x is invaild\n", pc, inst>>25u, func);
                     break;
                 case 0x7:
-                    if(inst>>25 == 0x00)
+                    if(inst>>25u == 0x00)
                         inst_t = AND;
-                    else if(inst>>25 == 0x01)
+                    else if(inst>>25u == 0x01)
                         inst_t = REMU;
                     else
-                        this->raiseError("Invaild RR Instruction at %x, The Func7 field is %x, The Func3 Field %x is invaild\n", pc, inst>>25, func);
+                        this->raiseError("Invaild RR Instruction at %x, The Func7 field is %x, The Func3 Field %x is invaild\n", pc, inst>>25u, func);
                     break;
                 default:
                     this->raiseError("Invaild RR Instruction at %x, The Func3 Field %x is invaild\n", pc, func);
                     break;
             }
-            func |= inst>>25<<3;
+            func |= inst>>25u<<3u;
             break;
         }
         case OP_32:{
             switch (func) {
                 case 0x0:
-                    if(inst>>25 == 0x00)
+                    if(inst>>25u == 0x00)
                         inst_t = ADDW;
-                    else if(inst>>25 == 0x01)
+                    else if(inst>>25u == 0x01)
                         inst_t = MULW;
-                    else if(inst>>25 == 0x20)
+                    else if(inst>>25u == 0x20)
                         inst_t = SUBW;
                     else
-                        this->raiseError("Invaild RRW Instruction at %x, The Func7 field is %x, The Func3 Field %x is invaild\n", pc, inst>>25, func);
+                        this->raiseError("Invaild RRW Instruction at %x, The Func7 field is %x, The Func3 Field %x is invaild\n", pc, inst>>25u, func);
                     break;
                 case 0x1:
                     inst_t = SLLW;
@@ -212,38 +212,38 @@ void Simulator::fetch(){
                     inst_t = DIVW;
                     break;
                 case 0x5:
-                    if(inst>>25 == 0x00)
+                    if(inst>>25u == 0x00)
                         inst_t = SRLW;
-                    else if(inst>>25 == 0x20)
+                    else if(inst>>25u == 0x20)
                         inst_t = SRAW;
-                    else if(inst>>25 == 0x01)
+                    else if(inst>>25u == 0x01)
                         inst_t = DIVUW;
                     else
-                        raiseError("Invaild RRW Instruction at %x, The Func7 field is %x, The Func3 Field %x is invaild\n", pc, inst>>25, func);
+                        raiseError("Invaild RRW Instruction at %x, The Func7 field is %x, The Func3 Field %x is invaild\n", pc, inst>>25u, func);
                     break;
                 case 0x6:
-                    if(inst>>25 == 0x01)
+                    if(inst>>25u == 0x01)
                         inst_t = REMW;
                     else
-                        raiseError("Invaild RRW Instruction at %x, The Func7 field is %x, The Func3 Field %x is invaild\n", pc, inst>>25, func);
+                        raiseError("Invaild RRW Instruction at %x, The Func7 field is %x, The Func3 Field %x is invaild\n", pc, inst>>25u, func);
                     break;
                 case 0x7:
-                    if(inst>>25 == 0x01)
+                    if(inst>>25u == 0x01)
                         inst_t = REMUW;
                     else
-                        raiseError("Invaild RRW Instruction at %x, The Func7 field is %x, The Func3 Field %x is invaild\n", pc, inst>>25, func);
+                        raiseError("Invaild RRW Instruction at %x, The Func7 field is %x, The Func3 Field %x is invaild\n", pc, inst>>25u, func);
                     break;
                 default:
-                    raiseError("Invaild RRW Instruction at %x, The Func7 field is %x, The Func3 Field %x is invaild\n", pc, inst>>25, func);
+                    raiseError("Invaild RRW Instruction at %x, The Func7 field is %x, The Func3 Field %x is invaild\n", pc, inst>>25u, func);
                     break;
             }
-            func |= inst>>25<<3;
+            func |= inst>>25u<<3u;
             break;
         }
         case OP_JALR: // I-Type
             inst_t = JALR;
             rs2 = 0;
-            imm = (int) inst>>20;
+            imm = (int) inst>>20u;
             break;
         case OP_LOAD:
             switch (func) {
@@ -293,7 +293,7 @@ void Simulator::fetch(){
                     inst_t = XORI;
                     break;
                 case 0x5:{
-                    switch (inst>>26) {
+                    switch (inst>>26u) {
                         case 0x00:
                             inst_t = SRLI;
                             break;
@@ -301,7 +301,7 @@ void Simulator::fetch(){
                             inst_t = SRAI;
                             break;
                         default:
-                            this->raiseError("Invaild RI Instruction at %x, The Func3 field is %x, The Func7 Field %x is invaild\n", pc, inst>>26, func);
+                            this->raiseError("Invaild RI Instruction at %x, The Func3 field is %x, The Func7 Field %x is invaild\n", pc, inst>>26u, func);
                             break;
                     }
                     break;
@@ -317,7 +317,7 @@ void Simulator::fetch(){
                     break;
             }
             rs2 = 0;
-            imm = (int) inst>>20;
+            imm = (int) inst>>20u;
             break;
         case OP_IMM_32:
             switch (func) {
@@ -328,10 +328,10 @@ void Simulator::fetch(){
                     inst_t = SLLIW;
                     break;
                 case 0x5:
-                    if(inst>>30 == 1){
+                    if(inst>>30u == 1){
                         inst_t = SRAIW;
                     }
-                    else if(inst>>30 == 0){
+                    else if(inst>>30u == 0){
                         inst = SRLIW;
                     }
                     else{
@@ -365,7 +365,7 @@ void Simulator::fetch(){
                     break;
             }
             rd = 0;
-            imm = (inst >>7 & 0x1f) | inst>>25<<5;
+            imm = (inst >>7u & 0x1fu) | inst>>25u<<5u;
             imm = (int)imm<<20>>20;
             // is this right?
             break;
@@ -394,8 +394,8 @@ void Simulator::fetch(){
                     break;
             }
             rd = 0;
-            imm = (inst>>8 &0xf)<<1 | (inst>>25 & 0x3f)<<5 |(inst>>7&0x1)<<11 |inst>>31<<12;
-            imm = (int)imm<<19>>19;
+            imm = (inst>>8u &0xfu)<<1u | (inst>>25u & 0x3fu)<<5u |(inst>>7u&0x1u)<<11u |inst>>31u<<12u;
+            imm = (int)imm<<19u>>19u;
             if(is_verbose){
             printf("\timm:%x", imm);
             }
@@ -404,20 +404,20 @@ void Simulator::fetch(){
         case OP_LUI://U-Type
             inst_t = LUI;
             func = rs1 = rs2 = 0;
-            imm = (int)inst >> 12 << 12;
+            imm = (int)inst >> 12u << 12u;
             //is this right?
             break;
         case OP_AUIPC:
             inst_t = AUIPC;
             func = rs1 = rs2 = 0;
-            imm = (int)inst >> 12 << 12;
+            imm = (int)inst >> 12u << 12u;
             // is this right?
             break;
         case OP_JAL://UJ-Type
             inst_t = JAL;
             func = rs1 =rs2 = 0;
-            imm = (inst >>21 & 0x3ff)<<1 |(inst>>20 & 1)<<11 | (inst >>12 & 0xff)<<12| inst>>31<<20;
-            imm = (int)imm<<11>>11;
+            imm = (inst >>21u & 0x3ffu)<<1u |(inst>>20u & 1u)<<11u | (inst >>12u & 0xffu)<<12u| inst>>31u<<20u;
+            imm = (int)imm<<11u>>11u;
             // is this right?
             break;
         case OP_BUBBLE:
@@ -429,10 +429,11 @@ void Simulator::fetch(){
     }
     if(is_verbose){
     printf("\tIF: %s", INSTNAME[inst_t]);
-    printf("\tpc: %llx", pc);
+    printf("\tpc: %lx", pc);
     }
     uint64_t pred_pc;
     if(opcode == OP_JAL){
+        history.jal_count++;
         pred_pc = pc + imm;
     }
     else if(opcode == OP_BRANCH){
@@ -446,7 +447,7 @@ void Simulator::fetch(){
         pred_pc = pc + 4;
     }
     if(is_verbose){
-    printf("\tpred_pc: %llx\n", pred_pc);
+    printf("\tpred_pc: %lx\n", pred_pc);
     }
     f_reg.in.pred_pc = pred_pc;
     
@@ -460,7 +461,7 @@ void Simulator::fetch(){
     d_reg.in.inst = inst_t;
     
     if(this->is_verbose){
-        printf("Fetch instruction 0x%x at 0x%llx\n", inst, pc);
+        printf("Fetch instruction 0x%x at 0x%lx\n", inst, pc);
     }
 }
 
@@ -482,29 +483,43 @@ void Simulator::decode(){
     
     val1 = reg[rs1];
     val2 = reg[rs2];
-    
+
     if(rs1!=0){
-        if(rs1 == m_reg.out.rd && m_reg.out.opcode){
-            if(m_reg.out.opcode==OP_LOAD){
+        if(rs1 == e_reg.out.rd && e_reg.out.opcode){
+//            if(e_reg.out.opcode==OP_STORE){//OP_STORE 的 rd 为0 不可能成立
+//                val1 = bypass
+//            }
+
+//            if(e_reg.out.opcode==OP_LOAD){ //在run中将此种情形产生的结果记为bubble
+//                val1 =
+//            }
+
+            // 由于非并行，故可以传递e_valE否则应stall一周期
+            history.data_hazard_count++;
+            val1 = bypass.e_valE;
+        }
+        else if(rs1 == m_reg.out.rd && m_reg.out.opcode){
+            history.data_hazard_count++;
+            if(is_read_memory(m_reg.out.inst)){
+                // 由于非并行，故可以传递m_valM否则应stall一周期
                 val1 = bypass.m_valM;
             }
             else{
                 val1 = m_reg.out.valE;
             }
         }
-        if(rs1 == e_reg.out.rd && e_reg.out.opcode){
-//            if(e_reg.out.opcode==OP_STORE){//OP_STORE 的 rd 为0 不可能成立
-//                val1 = bypass
-//            }
-            
-//            if(e_reg.out.opcode==OP_LOAD){ //在run中将此种情形产生的结果记为bubble
-//                val1 =
-//            }
-            val1 = m_reg.in.valE;
+        else if(w_reg.out.rd == rs1){
+            history.structural_hazard_count++;
         }
+
     }
     if(rs2!=0){
-        if(rs2 == m_reg.out.rd && m_reg.out.opcode){
+        if(rs2 == e_reg.out.rd && e_reg.out.opcode){
+            history.data_hazard_count++;
+            val2 = bypass.e_valE;
+        }
+        else if(rs2 == m_reg.out.rd && m_reg.out.opcode){
+            history.data_hazard_count++;
             if(m_reg.out.opcode==OP_LOAD){
                 val2 = bypass.m_valM;
             }
@@ -512,8 +527,8 @@ void Simulator::decode(){
                 val2 = m_reg.out.valE;
             }
         }
-        if(rs2 == e_reg.out.rd && e_reg.out.opcode){
-            val2 = m_reg.in.valE;
+        else if(rs2 == w_reg.out.rd){
+            history.structural_hazard_count++;
         }
     }
     
@@ -670,7 +685,10 @@ void Simulator::execute(){
     uint64_t pc = e_reg.out.pc;
     InstSet inst = e_reg.out.inst;
     if(is_verbose){
-    printf("\tEX: %s ", INSTNAME[inst]);
+        printf("\tEX: %s ", INSTNAME[inst]);
+    }
+    if(is_dump_history){
+        history.inst_record.emplace_back(INSTNAME[inst]);
     }
     int64_t valE=0;
     
@@ -686,9 +704,6 @@ void Simulator::execute(){
                 break;
                 
             case JAL:
-                valE = pc + 4;
-                break;
-                
             case JALR:
                 // return (val1 + imm) & ~1 to f_reg
                 valE = pc + 4;
@@ -943,6 +958,9 @@ void Simulator::execute(){
     }
     
     bypass.e_valE = valE;
+
+    if(is_jump(inst) || is_branch(inst))
+        history.control_hazard_count++;
     
     m_reg.in.opcode = opcode;
     m_reg.in.func = func;
@@ -964,7 +982,6 @@ void Simulator::memoryAccess(){
     int64_t valE = m_reg.out.valE;
     int64_t val2 = m_reg.out.val2;
     uint32_t rd = m_reg.out.rd;
-    int32_t imm = m_reg.out.imm;
     uint64_t pc = m_reg.out.pc;
     InstSet inst = m_reg.out.inst;
     if(is_verbose){
@@ -974,6 +991,7 @@ void Simulator::memoryAccess(){
     
     switch (opcode) {
         case OP_LOAD:{
+            history.load_count++;
             switch (func) {
                 case 0x0:
                     valM = (int64_t)memory->getByte(valE);
@@ -1003,6 +1021,7 @@ void Simulator::memoryAccess(){
             break;
         }
         case OP_STORE:
+            history.store_count++;
             switch (func) {
                 case 0x0:
                     memory->setByte(valE, val2);
@@ -1118,7 +1137,7 @@ int64_t Simulator::handleSystemCall(int64_t op1, int64_t op2){
             break;
             
         case SYS_READ_I:
-            scanf(" %lld", &op1);
+            scanf(" %ld", &op1);
             break;
             
         case SYS_PRINT_S:{
@@ -1141,10 +1160,10 @@ string Simulator::getRegInfo(){
     string str;
     char buf[65536];
     str += "----------CPU----------\n";
-    sprintf(buf, "PC: 0x%llx\n", f_reg.out.pred_pc);
+    sprintf(buf, "PC: 0x%lx\n", f_reg.out.pred_pc);
     str += buf;
     for(uint32_t i = 0; i < 32; i++){
-        sprintf(buf, "%s: 0x%.8llx(%lld)\t", REGNAME[i], this->reg[i], this->reg[i]);
+        sprintf(buf, "%s: 0x%.8lx(%ld)\t", REGNAME[i], this->reg[i], this->reg[i]);
         str += buf;
         if(i%4 == 3)
             str += "\n";
@@ -1175,7 +1194,7 @@ Simulator::Simulator(MemoryManager* memory, BranchPredictor* predictor){
 }
 
 
-Simulator::~Simulator(){}
+Simulator::~Simulator()= default;
 
 
 void Simulator::initStack(uint32_t baseaddr, uint32_t max_size){
@@ -1216,14 +1235,19 @@ void Simulator::run(uint64_t pc){
         execute();
         decode();
         fetch();
+
+        if(e_reg.in.opcode==ECALL && (e_reg.in.val2 == SYS_EXIT || e_reg.in.val2 == SYS_ORIGINAL_EXIT)) {
+            // this shouldn't be achieved but CLion warning is really fucked me!
+            break;
+        }
         
         if(d_reg.out.opcode==OP_JALR){
-            //间接跳转，需等待解码完成
+            //间接跳转，需等待计算完成
             //stall\bubble\normal\normal\normal
             f_reg.stall = true;
             d_reg.bubble = true;
             history.jalr_count++;
-            
+
             if(is_verbose){
                 printf("JALR Instruction, set to stall bubble normal normal normal\n");
             }
@@ -1264,6 +1288,14 @@ void Simulator::run(uint64_t pc){
         e_reg.tick();
         m_reg.tick();
         w_reg.tick();
+
+        if(is_dump_history){
+            history.reg_record.emplace_back(getRegInfo());
+            if(history.inst_record.size()>10000){
+                history.reg_record.clear();
+                history.inst_record.clear();
+            }
+        }
         
         if(is_verbose){
             this->printInfo();
@@ -1304,11 +1336,17 @@ void Simulator::printStatistics(){
     printf("Number of Instructions: %u\n", history.inst_count);
     printf("Avg Cycles per Instrcution: %.4f\n", (float)history.cycle_count / history.inst_count);
     printf("Number of JALR Instructions: %u\n", history.jalr_count);
+    printf("Number of JAL Instructions: %u\n", history.jal_count);
     printf("Number of LOAD Instructions: %u\n", history.load_count);
     printf("Number of STORE Instructions: %u\n", history.store_count);
-    printf("Branch Perdiction Accuracy: %.4f (Using Strategy: %s)\n", (float)history.predicted_success/(history.predicted_success+history.predicted_unsuccess), branch_predictor->getStrategyName().c_str());
+    printf("Number of BRANCH Instructions: %u\n", history.branch_count);
+    printf("Number of Successful Prediction: %u\n", history.predicted_success);
+    printf("Number of Unsuccessful Prediction: %u\n", history.predicted_unsuccess);
+    printf("Branch Prediction Accuracy: %.4f (Using Strategy: %s)\n",
+            (float)history.predicted_success/history.branch_count,
+            branch_predictor->getStrategyName().c_str());
     printf("Number of Control Hazards: %u\n", this->history.control_hazard_count);
     printf("Number of Data Hazards: %u\n", this->history.data_hazard_count);
-    printf("Number of Memory Hazards: %u\n", this->history.memory_hazard_count);
+    printf("Number of Structural Hazards: %u\n", this->history.structural_hazard_count);
     printf("-----------------------------------\n");
 }

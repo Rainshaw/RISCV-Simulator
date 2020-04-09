@@ -17,11 +17,11 @@ using std::string;
 
 class MemoryManager{
 private:
-    uint16_t getFirstIndex(uint32_t addr);
-    uint16_t getSecondIndex(uint32_t addr);
-    uint16_t getPageOffset(uint32_t addr);
+    static uint16_t getFirstIndex(uint32_t addr);
+    static uint16_t getSecondIndex(uint32_t addr);
+    static uint16_t getPageOffset(uint32_t addr);
     bool addrExist(uint32_t addr);
-    uint8_t **memory[1024];
+    uint8_t **memory[1024]{};
 
 public:
     MemoryManager();

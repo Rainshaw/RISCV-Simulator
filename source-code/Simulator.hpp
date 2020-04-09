@@ -149,173 +149,182 @@ namespace RISCV_GRX {
         DIVW = 72,
         DIVUW = 73,
         REMW = 74,
-        REMUW =75,
+        REMUW = 75,
     };
 
     extern const char *INSTNAME[];
 
-int const OP_BUBBLE = 0;
-int const OP_LUI = 0x37;
-int const OP_AUIPC = 0x17;
+    int const OP_BUBBLE = 0;
+    int const OP_LUI = 0x37;
+    int const OP_AUIPC = 0x17;
 
-int const OP_JAL = 0x6f;
-int const OP_JALR = 0x67;
-int const OP_BRANCH = 0x63;
+    int const OP_JAL = 0x6f;
+    int const OP_JALR = 0x67;
+    int const OP_BRANCH = 0x63;
 
-int const OP_LOAD = 0x03;
-int const OP_STORE = 0x23;
+    int const OP_LOAD = 0x03;
+    int const OP_STORE = 0x23;
 
-int const OP_IMM = 0x13;
-int const OP_RR = 0x33;
+    int const OP_IMM = 0x13;
+    int const OP_RR = 0x33;
 
-//int const OP_FENCE= 0x0f;
-int const OP_ECALL = 0x73;
+//    int const OP_FENCE= 0x0f;
+    int const OP_ECALL = 0x73;
 
-int const OP_IMM_32 = 0x1B;
-int const OP_32 = 0x3B;
+    int const OP_IMM_32 = 0x1B;
+    int const OP_32 = 0x3B;
 
-    inline bool is_branch(InstSet inst){
-        return inst == BEQ || inst ==BNE || inst == BLT || inst == BGE || inst == BGEU || inst == BLTU;
+    inline bool is_branch(InstSet inst) {
+        return inst == BEQ || inst == BNE || inst == BLT || inst == BGE || inst == BGEU || inst == BLTU;
     }
 
-    inline bool is_jump(InstSet inst){
+    inline bool is_jump(InstSet inst) {
         return inst == JALR || inst == JAL;
     }
 
-    inline bool is_read_memory(InstSet inst){
+    inline bool is_read_memory(InstSet inst) {
         return inst == LB || inst == LH || inst == LW || inst == LD || inst == LBU || inst == LHU || inst == LWU;
 
     }
 
-int const SYS_EXIT = 3;
-int const SYS_PRINT_I = 2;
-int const SYS_PRINT_C = 1;
-int const SYS_PRINT_S = 0;
-int const SYS_READ_I = 5;
-int const SYS_READ_C = 4;
-int const SYS_ORIGINAL_EXIT = 93;
+    int const SYS_EXIT = 3;
+    int const SYS_PRINT_I = 2;
+    int const SYS_PRINT_C = 1;
+    int const SYS_PRINT_S = 0;
+    int const SYS_READ_I = 5;
+    int const SYS_READ_C = 4;
+    int const SYS_ORIGINAL_EXIT = 93;
 
     // End RISCV_GRX NAMESPACE
 }
 
 
-class Simulator{
+class Simulator {
 private:
     template<class T>
-    struct ClockReg{
+    struct ClockReg {
         bool stall, bubble;
         T in, out;
-        void tick(){
-            if(bubble){
+
+        void tick() {
+            if (bubble) {
                 out.opcode = RISCV_GRX::OP_BUBBLE;
                 out.inst = RISCV_GRX::UNKNOWN;
                 bubble = stall = false;
-            }
-            else if(stall){
+            } else if (stall) {
                 stall = false;
-            }
-            else{
+            } else {
                 out = in;
             }
         }
     };
 
-    struct DRegX{
+    struct DRegX {
         uint32_t opcode, func, rs1, rs2, rd;
         int32_t imm;
         uint64_t pc;
         RISCV_GRX::InstSet inst;
     };
-    struct DReg: ClockReg<DRegX>{} d_reg;
-    
-    struct ERegX{
+    struct DReg : ClockReg<DRegX> {
+    } d_reg{};
+
+    struct ERegX {
         uint32_t opcode, func, rd;
         int32_t imm;
         int64_t val1, val2;
         uint64_t pc;
         RISCV_GRX::InstSet inst;
     };
-    struct EReg: ClockReg<ERegX>{} e_reg;
-    
-    struct MRegX{
+    struct EReg : ClockReg<ERegX> {
+    } e_reg{};
+
+    struct MRegX {
         uint32_t opcode, func, rd;
         int32_t imm;
         int64_t val2, valE;
         uint64_t pc;
         RISCV_GRX::InstSet inst;
     };
-    struct MReg:ClockReg<MRegX>{} m_reg;
-    
-    struct WRegX{
+    struct MReg : ClockReg<MRegX> {
+    } m_reg{};
+
+    struct WRegX {
         uint32_t opcode, rd;
         int64_t valE, valM;
         RISCV_GRX::InstSet inst;
     };
-    struct WReg: ClockReg<WRegX>{} w_reg;
-    
-    struct FReg{
+    struct WReg : ClockReg<WRegX> {
+    } w_reg{};
+
+    struct FReg {
         bool stall;
-        struct{
+        struct {
             uint64_t pred_pc;
-        }in, out;
-        void tick(){
-            if(stall){
+        } in, out;
+
+        void tick() {
+            if (stall) {
                 stall = false;
-            }
-            else{
+            } else {
                 out = in;
             }
         }
-    } f_reg;
-    
-    struct PipelineSignal{
-        int64_t e_valE, m_valM;
-    } bypass;
+    } f_reg{};
 
-    struct History{
+    struct PipelineSignal {
+        int64_t e_valE, m_valM;
+    } bypass{};
+
+    struct History {
         uint32_t inst_count;
         uint32_t cycle_count;
         uint32_t branch_count;
         uint32_t jalr_count;
+        uint32_t jal_count;
         uint32_t load_count;
         uint32_t store_count;
-        
+
         uint32_t predicted_success;
         uint32_t predicted_unsuccess;
 
         uint32_t data_hazard_count;
         uint32_t control_hazard_count;
-        uint32_t memory_hazard_count;
+        uint32_t structural_hazard_count;
 
         std::vector<std::string> inst_record;
         std::vector<std::string> reg_record;
 
-        std::string memory_dump;
     } history;
 
     void fetch();
+
     void decode();
+
     void execute();
+
     void memoryAccess();
+
     void writeBack();
 
     int64_t handleSystemCall(int64_t op1, int64_t op2);
 
     std::string getRegInfo();
-    void raiseError(const char* format, ...);
+
+    void raiseError(const char *format, ...);
 
 public:
-    bool is_single_step;
-    bool is_verbose;
-    bool is_dump_history;
+    bool is_single_step{};
+    bool is_verbose{};
+    bool is_dump_history{};
 
-    int64_t reg[RISCV_GRX::REGNUM];
-    uint32_t statck_base;
-    uint32_t maximum_stack_size;
-    MemoryManager* memory;
-    BranchPredictor* branch_predictor;
+    int64_t reg[RISCV_GRX::REGNUM]{};
+    uint32_t statck_base{};
+    uint32_t maximum_stack_size{};
+    MemoryManager *memory;
+    BranchPredictor *branch_predictor;
 
-    Simulator(MemoryManager* memory, BranchPredictor* predictor);
+    Simulator(MemoryManager *memory, BranchPredictor *predictor);
+
     ~Simulator();
 
     void initStack(uint32_t baseaddr, uint32_t max_size);
