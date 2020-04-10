@@ -1,4 +1,5 @@
 #include "lib.h"
+
 int main() {
     int f1 = 0, f2 = 1;
     int a[] = {1, 2, 3, 4, 5};
@@ -12,7 +13,7 @@ int main() {
     print_s("a[5] = ");
     for (int i = 0; i < 5; ++i) {
         print_d(a[i]);
-        print_c(' '); 
+        print_c(' ');
     }
     print_c('\n');
 
@@ -23,7 +24,7 @@ int main() {
     print_s("a[5] = ");
     for (int i = 0; i < 5; ++i) {
         print_d(a[i]);
-        print_c(' '); 
+        print_c(' ');
     }
     print_c('\n');
     exit_proc();

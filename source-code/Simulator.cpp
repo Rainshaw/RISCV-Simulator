@@ -16,8 +16,7 @@
 #define MAX32 0xFFFFFFFF
 typedef unsigned __int128 uint128_t;
 
-uint64_t top64( uint64_t x, uint64_t y )
-{
+uint64_t top64(uint64_t x, uint64_t y) {
     uint64_t a = x >> 32, b = x & 0xffffffff;
     uint64_t c = y >> 32, d = y & 0xffffffff;
 
@@ -92,6 +91,8 @@ using std::string;
 
 
 void Simulator::fetch() {
+    if (e_reg.out.stall_count != 0)
+        return;
     uint64_t pc = f_reg.out.pred_pc;
     if (pc % 2 != 0) {
         this->raiseError("PC 0x%llx is illegal!\n", pc);
@@ -566,6 +567,8 @@ void Simulator::fetch() {
 
 
 void Simulator::decode() {
+    if (e_reg.out.stall_count != 0)
+        return;
     uint32_t opcode = d_reg.out.opcode;
     uint32_t func = d_reg.out.func;
     uint32_t rs1 = d_reg.out.rs1;
@@ -791,8 +794,15 @@ void Simulator::execute() {
     }
     int64_t valE = 0;
 
+    if (stall_count >= 1) {
+        stall_count -= 1;
+    }
+    e_reg.out.stall_count = stall_count;
+    if (stall_count != 0) {
+        return;
+    }
 
-    if (opcode != OP_BUBBLE && stall_count == 1) {
+    if (opcode != OP_BUBBLE) {
         history.inst_count++;
         switch (inst) {
             case LUI:
@@ -1333,7 +1343,8 @@ void Simulator::run(uint64_t pc) {
         decode();
         fetch();
 
-        if(e_reg.out.opcode==OP_BUBBLE || e_reg.out.stall_count == 1) {
+
+        if (e_reg.out.stall_count == 0) {
 
             if (e_reg.out.opcode == ECALL && (e_reg.out.val2 == SYS_EXIT || e_reg.out.val2 == SYS_ORIGINAL_EXIT)) {
                 // this shouldn't be achieved but CLion warning is really fucked me!
@@ -1381,9 +1392,7 @@ void Simulator::run(uint64_t pc) {
                     printf("Load Instruction cause data hazard, set to stall, stall, bubble, normal, normal\n");
                 }
             }
-        }
-        else{
-            e_reg.out.stall_count-=1;
+        } else {
             e_reg.stall = true;
             d_reg.stall = true;
             f_reg.stall = true;

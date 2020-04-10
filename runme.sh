@@ -1,19 +1,21 @@
 mkdir build
-cd build
+cd build || exit
 cmake ..
 make
 
-./Sim ../riscv-elf/inclass/add.riscv
-./Sim ../riscv-elf/inclass/mul-div.riscv
-./Sim ../riscv-elf/inclass/n!.riscv
-./Sim ../riscv-elf/inclass/qsort.riscv
-./Sim ../riscv-elf/inclass/simple-function.riscv
+dir=riscv-elf/rv64im
 
-./Sim ../riscv-elf/others/ackermann.riscv
-./Sim ../riscv-elf/others/helloworld.riscv
-./Sim ../riscv-elf/others/matrixmulti.riscv
-./Sim ../riscv-elf/others/quicksort.riscv
-./Sim ../riscv-elf/others/test_arithmetic.riscv
-./Sim ../riscv-elf/others/test_branch.riscv
-#./Sim ../riscv-elf/others/moushou4.riscv
+./Sim ../$dir/inclass/add.riscv
+./Sim ../$dir/inclass/mul-div.riscv
+./Sim ../$dir/inclass/n!.riscv
+./Sim ../$dir/inclass/qsort.riscv
+./Sim ../$dir/inclass/simple-function.riscv
+
+./Sim ../$dir/others/ackermann.riscv
+./Sim ../$dir/others/helloworld.riscv
+./Sim ../$dir/others/matrixmulti.riscv
+./Sim ../$dir/others/quicksort.riscv
+./Sim ../$dir/others/test_arithmetic.riscv
+./Sim ../$dir/others/test_branch.riscv
+
 

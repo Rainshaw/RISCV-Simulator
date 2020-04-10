@@ -1,4 +1,5 @@
 #include "lib.h"
+
 int main() {
     int a = 10, b = 20, c = 30, d = 12345, e = 1, f = 2;
     int x = a + b;
@@ -15,7 +16,7 @@ int main() {
     print_d(x);
     print_c('\n');
     y = d << f;
-    print_d(y); 
+    print_d(y);
     print_c('\n');
     z = d >> 4;
     print_d(z);

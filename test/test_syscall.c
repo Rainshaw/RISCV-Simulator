@@ -1,4 +1,5 @@
 #include "lib.h"
+
 int main() {
     print_s("This is string from print_s()\n");
     print_d(123456);

@@ -4,20 +4,17 @@
 
 #include "lib.h"
 
-void print_d(int num)
-{
+void print_d(int num) {
     asm("li a7, 1;"
         "scall");
 }
 
-void print_s(const char *str)
-{
+void print_s(const char *str) {
     asm("li a7, 3;"
         "scall");
 }
 
-void print_c(char ch)
-{
+void print_c(char ch) {
     asm("li a7, 2;"
         "scall");
 }
@@ -27,8 +24,7 @@ void exit_proc() {
         "scall");
 }
 
-char read_char()
-{
+char read_char() {
     char result;
     asm("li a7, 5;"
         "scall");
@@ -36,8 +32,7 @@ char read_char()
     return result;
 }
 
-long long read_num()
-{
+long long read_num() {
     long long result;
     asm("li a7, 4;"
         "scall");

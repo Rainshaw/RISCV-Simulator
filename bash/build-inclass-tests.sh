@@ -1,21 +1,23 @@
 echo "Building RISC-V ELFs..."
+cd ..
+dir2=riscv-elf/rv64im/inclass
+mkdir $dir2 -p
 
-mkdir riscv-elf/inclass -p
 cd test-inclass || exit
 dir=~/riscv/riscv64im/bin
 
 rvgcc=$dir/riscv64-unknown-elf-gcc
 flags='-Wa,-march=rv64im'
 
-$rvgcc $flags add.c -o ../riscv-elf/inclass/add.riscv
-$rvgcc $flags double-float.c -o ../riscv-elf/inclass/double-float.riscv
-$rvgcc $flags mul-div.c -o ../riscv-elf/inclass/mul-div.riscv
-$rvgcc $flags n!.c -o ../riscv-elf/inclass/n!.riscv
-$rvgcc $flags qsort.c -o ../riscv-elf/inclass/qsort.riscv
-$rvgcc $flags simple-function.c -o ../riscv-elf/inclass/simple-function.riscv
+$rvgcc $flags add.c -o ../$dir2/add.riscv
+$rvgcc $flags double-float.c -o ../$dir2/double-float.riscv
+$rvgcc $flags mul-div.c -o ../$dir2/mul-div.riscv
+$rvgcc $flags n!.c -o ../$dir2/n!.riscv
+$rvgcc $flags qsort.c -o ../$dir2/qsort.riscv
+$rvgcc $flags simple-function.c -o ../$dir2/simple-function.riscv
 
 echo "Automatically dumping ELFs for reference"
-cd ../riscv-elf/inclass || exit
+cd ../$dir2 || exit
 rvdump=$dir/riscv64-unknown-elf-objdump
 
 $rvdump -D add.riscv > add.s
