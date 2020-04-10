@@ -1,5 +1,3 @@
-sh bash/build-riscv-elfs.sh
-sh bash/build-inclass-tests.sh
 mkdir build
 cd build
 cmake ..
@@ -17,5 +15,5 @@ make
 ./Sim ../riscv-elf/others/quicksort.riscv
 ./Sim ../riscv-elf/others/test_arithmetic.riscv
 ./Sim ../riscv-elf/others/test_branch.riscv
-./Sim ../riscv-elf/others/moushou4.riscv
+#./Sim ../riscv-elf/others/moushou4.riscv
 

@@ -17,14 +17,14 @@ using std::string;
 bool verbose = false;
 bool single_step = false;
 bool dump_history = false;
-char* elf_file_name = nullptr;
+char *elf_file_name = nullptr;
 BranchPredictor::Strategy strategy = BranchPredictor::Strategy::NT;
 
 
-bool parsePara(int argc, char **argv){
-    for(int i = 1; i < argc; i++){
-        if(argv[i][0] == '-'){
-            switch(argv[i][1]){
+bool parsePara(int argc, char **argv) {
+    for (int i = 1; i < argc; i++) {
+        if (argv[i][0] == '-') {
+            switch (argv[i][1]) {
                 case 'v':
                     verbose = true;
                     break;
@@ -35,33 +35,27 @@ bool parsePara(int argc, char **argv){
                     dump_history = true;
                     break;
                 case 'b':
-                    if(i + 1 < argc){
+                    if (i + 1 < argc) {
                         string branch = argv[++i];
-                        if(branch == "AT"){
+                        if (branch == "AT") {
                             strategy = BranchPredictor::Strategy::AT;
-                        }
-                        else if(branch == "NT"){
+                        } else if (branch == "NT") {
                             strategy = BranchPredictor::Strategy::NT;
-                        }
-                        else if(branch == "BTFNT"){
+                        } else if (branch == "BTFNT") {
                             strategy = BranchPredictor::Strategy::BTFNT;
-                        }
-                        else if(branch == "BPB"){
+                        } else if (branch == "BPB") {
                             strategy = BranchPredictor::Strategy::BPB;
-                        }
-                        else{
+                        } else {
                             return false;
                         }
-                    }
-                    else{
+                    } else {
                         return false;
                     }
                     break;
                 default:
                     return false;
             }
-        }
-        else{
+        } else {
             elf_file_name = argv[i];
         }
     }
@@ -69,7 +63,7 @@ bool parsePara(int argc, char **argv){
     return elf_file_name != nullptr;
 }
 
-void printUsage(){
+void printUsage() {
     printf("Usage: ./Sim riscv-elf-file-name [-v] [-d] [-s] [-b para]\n");
     printf("\tParameters:\n");
     printf("\t\t[-v]: to use verbose mode\n");
@@ -84,59 +78,61 @@ void printUsage(){
 }
 
 
-void printELFInfo(ELFIO::elfio* reader){
+void printELFInfo(ELFIO::elfio *reader) {
     printf("---------ELF Info-------------\n");
 
     printf("---------End ELF Info---------\n");
 }
 
 
-void loadElf(ELFIO::elfio* reader, MemoryManager* memory){
+void loadElf(ELFIO::elfio *reader, MemoryManager *memory) {
     ELFIO::Elf_Half seg_num = reader->segments.size();
-    printf("-------load ELF-------\n");
-    
+    if (verbose) {
+        printf("-------load ELF-------\n");
+    }
+
 //    printf("Seg Num:%x\n", seg_num);
-    
-    for(uint32_t i=0; i < seg_num; i++){
-        const ELFIO::segment* seg_pointer = reader->segments[i];
+
+    for (uint32_t i = 0; i < seg_num; i++) {
+        const ELFIO::segment *seg_pointer = reader->segments[i];
         uint64_t full_mem = seg_pointer->get_memory_size();
         uint64_t full_addr = seg_pointer->get_virtual_address();
-        
-        
+
+
 //        printf("%llx %llx\n", full_mem, full_addr);
-        if(full_addr+full_mem > 0xFFFFFFFF){
+        if (full_addr + full_mem > 0xFFFFFFFF) {
             printf("ELF address space is larger than 32bit!\n");
             printf("Still could not deal with it!\n");
             exit(-1);
         }
-        
-        uint32_t file_size = (uint32_t)seg_pointer->get_file_size();
-        uint32_t mem_size = (uint32_t)full_mem;
-        uint32_t addr = (uint32_t)full_addr;
-        
+
+        uint32_t file_size = (uint32_t) seg_pointer->get_file_size();
+        uint32_t mem_size = (uint32_t) full_mem;
+        uint32_t addr = (uint32_t) full_addr;
+
 //        printf("%x %x %x\n", file_size, mem_size, addr);
-        
-        for(uint32_t pos=addr; pos<addr+mem_size; pos++){
-            if(!memory->pageExist(pos)){
+
+        for (uint32_t pos = addr; pos < addr + mem_size; pos++) {
+            if (!memory->pageExist(pos)) {
                 memory->addPage(pos);
             }
-            if(pos<addr+file_size){
-                memory->setByte(pos, seg_pointer->get_data()[pos-addr]);
-            }
-            else{
+            if (pos < addr + file_size) {
+                memory->setByte(pos, seg_pointer->get_data()[pos - addr]);
+            } else {
                 memory->setByte(pos, 0);
             }
         }
-        
-        
+
+
     }
-    printf("-----------------------\n");
+    if (verbose) {
+        printf("-----------------------\n");
+    }
 }
 
 
-
-int main(int argc, char **argv){
-    if(!parsePara(argc, argv)){
+int main(int argc, char **argv) {
+    if (!parsePara(argc, argv)) {
         printUsage();
         exit(-1);
     }
@@ -146,21 +142,17 @@ int main(int argc, char **argv){
     Simulator simulator(&memory, &branch_predictor);
 
     ELFIO::elfio reader;
-    if(!reader.load(elf_file_name)){
+    if (!reader.load(elf_file_name)) {
         fprintf(stderr, "Failure on loading ELF File\n");
         exit(-1);
     }
 
     loadElf(&reader, &memory);
 
-    if(verbose){
+    if (verbose) {
         printELFInfo(&reader);
         memory.printInfo();
     }
-    
-    
-//    char c;
-//    scanf("%c", &c);
 
     simulator.is_single_step = single_step;
     simulator.is_verbose = verbose;
