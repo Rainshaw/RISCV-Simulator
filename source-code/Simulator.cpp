@@ -1021,7 +1021,8 @@ void Simulator::execute() {
                 break;
 
             case DIVU:
-                raiseError("Still do not support DIVU Instruction!\n");
+                valE = (uint64_t) val1 / (uint64_t) val2;
+//                raiseError("Still do not support DIVU Instruction!\n");
                 break;
 
 

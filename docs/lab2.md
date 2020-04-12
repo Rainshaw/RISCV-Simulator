@@ -19,7 +19,7 @@ cd riscv-gnu-toolchain
 ```
 
 注意到在编译`riscv-gnu-toolchain`时，默认配置为支持`RV64IMAFDC`指令集，即`RV64GC`指令集，如下图，此时使用该工具编译时即使设置参数`-Wa, -march=rv64i`仍会链接使用扩展指令集的标准函数，其中`C`指令很多，并且导致我们的模拟器无法从程序入口执行，必须寻找`main`函数的位置。
-![默认参数时生成的gcc参数](assets/1.png)
+![默认参数时生成的gcc参数](../assets/1.png)
 所以，为了得到只使用`RV64I`的`ELF`程序，必须在编译`riscv-gnu-toolchain`时便指定指令集，于是执行了以下命令
 
 ```bash
@@ -36,7 +36,7 @@ $HOME/riscv/riscv64i/bin/riscv64-unknown-elf-gcc -Wa,-march=rv64i test/matrixmul
 $HOME/riscv/riscv64i/bin/riscv64-unknown-elf-objdump -D riscv-elf/others/matrixmulti.riscv > riscv-elf/others/matrixmulti.s
 ```
 
-除`RV64I`基本指令集外，我还额外实现了`M`扩展集，所以上述命令修改为
+除`RV64I`基本指令集外，我还额外实现了`M`扩展集的部分指令，所以上述命令修改为
 
 ```bash
 mkdir build-rv64im && cd "$_"
@@ -244,7 +244,7 @@ uint8_t MemoryManager::getByte(uint32_t addr){
 
 其中，`BPB`模式采用内存后12位维护一个长度为$2^{12}=4096$的直接映射高速缓存，用于存储该指令的状态。本模拟器中的缓存状态有四种，他们之间的转换关系如下图：
 
-![分支预测缓存状态的转换关系](assets/branchprediction.png)
+![分支预测缓存状态的转换关系](../assets/branchprediction.png)
 
 
 
@@ -1172,4 +1172,12 @@ Number of Structural Hazards: 26
 对于`Ackermann`程序，其中基本上都是递归调用和条件判断，没有循环，此时基于缓存的`BPB`就能发挥巨大威力，其余两种就都比较受限了。
 
 ## 其他需要说明的内容
+### `M`扩展集
+具体实现了以下指令
+```text
+MUL, MULHU, DIV, DIVU, REM, REMU, MULW, DIVW, DIVUW,
+REMW, REMUW
+```
+### 流水线流程图
+![流程图](../assets/2.jpg)
 
