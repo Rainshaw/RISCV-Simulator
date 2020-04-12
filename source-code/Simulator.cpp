@@ -584,8 +584,8 @@ void Simulator::decode() {
 
     int64_t val1 = 0, val2 = 0;
 
-    val1 = reg[rs1];
-    val2 = reg[rs2];
+    val1 = x[rs1];
+    val2 = x[rs2];
 
     if (rs1 != 0) {
         if (rs1 == e_reg.out.rd && e_reg.out.opcode) {
@@ -1201,11 +1201,11 @@ void Simulator::writeBack() {
         case OP_JALR:
         case OP_STORE: //rd=0
         case OP_BRANCH: //rd=0
-            reg[rd] = valE;
+            x[rd] = valE;
             break;
 
         case OP_LOAD:
-            reg[rd] = valM;
+            x[rd] = valM;
             break;
 
         case OP_BUBBLE:
@@ -1214,14 +1214,14 @@ void Simulator::writeBack() {
             this->raiseError("Invaild Instruction When Do Writing Back\n");
             break;
     }
-    if (reg[0]) {
-        reg[0] = 0;
+    if (x[0]) {
+        x[0] = 0;
     }
 
 }
 
 int64_t Simulator::handleSystemCall(int64_t op1, int64_t op2) {
-    int64_t type = op2; //reg a7
+    int64_t type = op2; //x a7
     int64_t arg1 = op1;
     switch (type) {
         case SYS_EXIT:
@@ -1274,7 +1274,7 @@ string Simulator::getRegInfo() {
     sprintf(buf, "PC: 0x%lx\n", f_reg.out.pred_pc);
     str += buf;
     for (uint32_t i = 0; i < 32; i++) {
-        sprintf(buf, "%s: 0x%.8lx(%ld)\t", REGNAME[i], this->reg[i], this->reg[i]);
+        sprintf(buf, "%s: 0x%.8lx(%ld)\t", REGNAME[i], this->x[i], this->x[i]);
         str += buf;
         if (i % 4 == 3)
             str += "\n";
@@ -1299,9 +1299,9 @@ void Simulator::raiseError(const char *format, ...) {
 Simulator::Simulator(MemoryManager *memory, BranchPredictor *predictor) {
     this->memory = memory;
     this->branch_predictor = predictor;
-    memset(reg, 0, sizeof(uint64_t) * REGNUM);
+    memset(x, 0, sizeof(uint64_t) * REGNUM);
     // for(int i = 0; i < REGNUM; i++ ){
-    //     this->reg[i] = 0;
+    //     this->x[i] = 0;
     // }
 }
 
@@ -1310,7 +1310,7 @@ Simulator::~Simulator() = default;
 
 
 void Simulator::initStack(uint32_t baseaddr, uint32_t max_size) {
-    this->reg[REG_SP] = baseaddr;
+    this->x[REG_SP] = baseaddr;
     this->statck_base = baseaddr;
     this->maximum_stack_size = max_size;
     for (uint32_t addr = baseaddr; addr > baseaddr - max_size; addr--) {
@@ -1332,7 +1332,7 @@ void Simulator::run(uint64_t pc) {
 
         history.cycle_count++;
 
-        if (this->reg[REG_SP] < this->statck_base - this->maximum_stack_size) {
+        if (this->x[REG_SP] < this->statck_base - this->maximum_stack_size) {
             this->raiseError("Stack Overflow!\n");
         }
 

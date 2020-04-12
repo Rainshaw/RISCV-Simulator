@@ -336,7 +336,8 @@ public:
     bool is_verbose{};
     bool is_dump_history{};
 
-    int64_t reg[RISCV_GRX::REGNUM]{};
+    int64_t x[RISCV_GRX::REGNUM]{};
+    
     uint32_t statck_base{};
     uint32_t maximum_stack_size{};
     MemoryManager *memory;
