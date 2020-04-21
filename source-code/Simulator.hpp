@@ -174,12 +174,12 @@ namespace RISCV_GRX {
     int const OP_IMM_32 = 0x1B;
     int const OP_32 = 0x3B;
 
-    int const CALU_BIT = 1;
-    int const CALU_ADD = 1;
-    int const CALU_MUL = 4;
-    int const CALU_MUL_32 = 3;
-    int const CALU_DIV = 30;
-    int const CALU_DIV_32 = 25;
+//    int const CALU_BIT = 1;
+//    int const CALU_ADD = 1;
+//    int const CALU_MUL = 4;
+//    int const CALU_MUL_32 = 3;
+//    int const CALU_DIV = 30;
+//    int const CALU_DIV_32 = 25;
 //    int const CALU_BIT = 1;
 //    int const CALU_ADD = 1;
 //    int const CALU_MUL = 1;
@@ -238,7 +238,7 @@ private:
         uint32_t opcode, func, rs1, rs2, rd;
         int32_t imm;
         uint64_t pc;
-        uint32_t stall_count;
+//        uint32_t stall_count;
         RISCV_GRX::InstSet inst;
     };
     struct DReg : ClockReg<DRegX> {
@@ -247,7 +247,7 @@ private:
     struct ERegX {
         uint32_t opcode, func, rd;
         int32_t imm;
-        uint32_t stall_count;
+//        uint32_t stall_count;
         int64_t val1, val2;
         uint64_t pc;
         RISCV_GRX::InstSet inst;
@@ -261,7 +261,7 @@ private:
         int64_t val2, valE;
         uint64_t pc;
         RISCV_GRX::InstSet inst;
-        uint32_t stall_count;
+//        uint32_t stall_count;
     };
     struct MReg : ClockReg<MRegX> {
     } m_reg{};
@@ -270,7 +270,7 @@ private:
         uint32_t opcode, rd;
         int64_t valE, valM;
         RISCV_GRX::InstSet inst;
-        uint32_t stall_count;
+//        uint32_t stall_count;
     };
     struct WReg : ClockReg<WRegX> {
     } w_reg{};
@@ -355,7 +355,7 @@ public:
 
     void printInfo();
 
-    void printStatistics();
+    void printStatistics() const;
 
 };
 
