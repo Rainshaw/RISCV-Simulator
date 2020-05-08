@@ -13,7 +13,7 @@
 using std::string;
 
 MemoryManager::MemoryManager(){
-    // memset(this->memory, nullptr, sizeof(uint8_t***)*1024);
+    this->cache = nullptr;
     for(auto & i : this->memory){
         i = nullptr;
     }
@@ -131,9 +131,8 @@ void MemoryManager::printInfo(){
 bool MemoryManager::copyMemory(void *src, uint32_t dest, uint32_t len){
     for(uint32_t i=0; i < len; i++){
         if(!this->addrExist(dest+i)){
-            printf("Data Copy Unsuccessfully, invalid addr 0x%x!\n", dest + i);
+            fprintf(stderr, "Data Copy Unsuccessfully, invalid addr 0x%x!\n", dest + i);
             exit(-1);
-            return false;
         }
         this->setByte(dest+i, ((uint8_t *)src)[i]);
     }
@@ -141,11 +140,14 @@ bool MemoryManager::copyMemory(void *src, uint32_t dest, uint32_t len){
 }
 
 
-bool MemoryManager::setByte(uint32_t addr, uint8_t val){
-    if(!this->addrExist(addr)){
-        printf("Memory write to invalid addr 0x%x!\n", addr);
+bool MemoryManager::setByte(uint32_t addr, uint8_t val, uint32_t *cycles) {
+    if (!this->addrExist(addr)) {
+        fprintf(stderr, "Memory write to invalid addr 0x%x!\n", addr);
         exit(-1);
-        return false;
+    }
+    if (this->cache != nullptr) {
+        this->cache->setByte(addr, val, cycles);
+        return true;
     }
     uint16_t i = this->getFirstIndex(addr);
     uint16_t j = this->getSecondIndex(addr);
@@ -154,11 +156,37 @@ bool MemoryManager::setByte(uint32_t addr, uint8_t val){
     return true;
 }
 
-uint8_t MemoryManager::getByte(uint32_t addr){
-    if(!this->addrExist(addr)){
-        printf("Memory read from invalid addr 0x%x!\n", addr);
+bool MemoryManager::setByteNoCache(uint32_t addr, uint8_t val) {
+    if (!this->addrExist(addr)) {
+        fprintf(stderr, "Memory write to invalid addr 0x%x!\n", addr);
         exit(-1);
-        return false;
+    }
+
+    uint16_t i = this->getFirstIndex(addr);
+    uint16_t j = this->getSecondIndex(addr);
+    uint16_t k = this->getPageOffset(addr);
+    this->memory[i][j][k] = val;
+    return true;
+}
+
+uint8_t MemoryManager::getByte(uint32_t addr, uint32_t *cycles) {
+    if (!this->addrExist(addr)) {
+        fprintf(stderr, "Memory read from invalid addr 0x%x!\n", addr);
+        exit(-1);
+    }
+    if (this->cache != nullptr) {
+        return this->cache->getByte(addr, cycles);
+    }
+    uint16_t i = this->getFirstIndex(addr);
+    uint16_t j = this->getSecondIndex(addr);
+    uint16_t k = this->getPageOffset(addr);
+    return this->memory[i][j][k];
+}
+
+uint8_t MemoryManager::getByteNoCache(int addr) {
+    if (!this->addrExist(addr)) {
+        fprintf(stderr, "Memory read from invalid addr 0x%x!\n", addr);
+        exit(-1);
     }
     uint16_t i = this->getFirstIndex(addr);
     uint16_t j = this->getSecondIndex(addr);
@@ -167,44 +195,76 @@ uint8_t MemoryManager::getByte(uint32_t addr){
 }
 
 
-bool MemoryManager::setNByte(uint32_t addr, uint8_t n, void* val){
-    if(!this->addrExist(addr)){
+//bool MemoryManager::setNByte(uint32_t addr, uint8_t n, void* val, uint32_t *cycles){
+//    if(!this->addrExist(addr)){
+//        printf("Memory write to invalid addr 0x%x!\n", addr);
+//        exit(-1);
+//        return false;
+//    }
+//    for(uint32_t i = 0; i < n; i++){
+//        this->setByte(addr+i, (&val)&0xFF, cycles)
+//    }
+////    uint16_t i = this->getFirstIndex(addr);
+////    uint16_t j = this->getSecondIndex(addr);
+////    uint16_t k = this->getPageOffset(addr);
+////    memcpy(&this->memory[i][j][k], (uint8_t *)val, n);
+//    return true;
+//}
+
+
+bool MemoryManager::setShort(uint32_t addr, uint16_t val, uint32_t *cycles) {
+//    return setNByte(addr, 2, &val, cycles);
+    if (!this->addrExist(addr)) {
         printf("Memory write to invalid addr 0x%x!\n", addr);
         exit(-1);
-        return false;
     }
-    uint16_t i = this->getFirstIndex(addr);
-    uint16_t j = this->getSecondIndex(addr);
-    uint16_t k = this->getPageOffset(addr);
-    memcpy(&this->memory[i][j][k], (uint8_t *)val, n);
+    this->setByte(addr, val & 0xff, cycles);
+    this->setByte(addr + 1, (val >> 8u) & 0xff);
     return true;
 }
 
 
-bool MemoryManager::setShort(uint32_t addr, uint16_t val){
-    return setNByte(addr, 2, &val);
+bool MemoryManager::setInt(uint32_t addr, uint32_t val, uint32_t *cycles) {
+//    return setNByte(addr, 4, &val, cycles);
+    if (!this->addrExist(addr)) {
+        printf("Memory write to invalid addr 0x%x!\n", addr);
+        exit(-1);
+    }
+    this->setByte(addr, val & 0xff, cycles);
+    this->setByte(addr + 1, (val >> 8u) & 0xff);
+    this->setByte(addr + 2, (val >> 16u) & 0xff);
+    this->setByte(addr + 3, (val >> 24u) & 0xff);
+    return true;
 }
- 
 
-bool MemoryManager::setInt(uint32_t addr, uint32_t val){
-    return setNByte(addr, 4, &val);
+
+bool MemoryManager::setLong(uint32_t addr, uint64_t val, uint32_t *cycles) {
+//    return setNByte(addr, 8, &val, cycles);
+    if (!this->addrExist(addr)) {
+        printf("Memory write to invalid addr 0x%x!\n", addr);
+        exit(-1);
+    }
+    this->setByte(addr, val & 0xff, cycles);
+    this->setByte(addr + 1, (val >> 8u) & 0xff);
+    this->setByte(addr + 2, (val >> 16u) & 0xff);
+    this->setByte(addr + 3, (val >> 24u) & 0xff);
+    this->setByte(addr + 4, (val >> 32u) & 0xff);
+    this->setByte(addr + 5, (val >> 40u) & 0xff);
+    this->setByte(addr + 6, (val >> 48u) & 0xff);
+    this->setByte(addr + 7, (val >> 56u) & 0xff);
+    return true;
 }
 
 
-bool MemoryManager::setLong(uint32_t addr, uint64_t val){
-    return setNByte(addr, 8, &val);
-}
-
-
-uint16_t MemoryManager::getShort(uint32_t addr){
-    uint16_t b1 = this->getByte(addr);
+uint16_t MemoryManager::getShort(uint32_t addr, uint32_t *cycles) {
+    uint16_t b1 = this->getByte(addr, cycles);
     uint16_t b2 = this->getByte(addr + 1);
     return b1 + (b2 << 8u);
 }
 
 
-uint32_t MemoryManager::getInt(uint32_t addr){
-    uint32_t b1 = this->getByte(addr);
+uint32_t MemoryManager::getInt(uint32_t addr, uint32_t *cycles) {
+    uint32_t b1 = this->getByte(addr, cycles);
     uint32_t b2 = this->getByte(addr + 1);
     uint32_t b3 = this->getByte(addr + 2);
     uint32_t b4 = this->getByte(addr + 3);
@@ -212,8 +272,8 @@ uint32_t MemoryManager::getInt(uint32_t addr){
 }
 
 
-uint64_t MemoryManager::getLong(uint32_t addr){
-    uint64_t b1 = this->getByte(addr);
+uint64_t MemoryManager::getLong(uint32_t addr, uint32_t *cycles) {
+    uint64_t b1 = this->getByte(addr, cycles);
     uint64_t b2 = this->getByte(addr + 1);
     uint64_t b3 = this->getByte(addr + 2);
     uint64_t b4 = this->getByte(addr + 3);
@@ -222,4 +282,8 @@ uint64_t MemoryManager::getLong(uint32_t addr){
     uint64_t b7 = this->getByte(addr + 6);
     uint64_t b8 = this->getByte(addr + 7);
     return b1 + (b2 << 8u) + (b3 << 16u) + (b4 << 24u) + (b5 << 32u) + (b6 << 40u) + (b7 << 48u) + (b8 << 56u);
+}
+
+void MemoryManager::setCache(Cache *pCache) {
+    this->cache = pCache;
 }

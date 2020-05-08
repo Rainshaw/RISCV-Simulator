@@ -42,9 +42,10 @@ private:
         }
     };
 
+    uint32_t reference_cnt;
     bool write_back;
     bool write_allocate;
-    MemoryManager *manager;
+    MemoryManager *memory;
     Cache *lower_cache;
     std::vector<Block> blocks;
 
@@ -52,12 +53,24 @@ private:
 
 
     void initCache();
+
     void loadBlockFromLowerLevel(uint32_t addr, uint32_t *cycles);
+
     void writeBlockToLowerLevel(Block &b);
+
     uint32_t getReplacementBlockId(uint32_t begin, uint32_t end);
 
+    uint32_t getTag(uint32_t addr) const;
+
+    uint32_t getId(uint32_t addr) const;
+
+    uint32_t getOffset(uint32_t addr) const;
+
+    uint32_t getAddr(Block &b) const;
+
+
 public:
-    struct Policy{
+    struct Policy {
         uint32_t cache_size;
         uint32_t block_size;
         uint32_t block_num;
@@ -66,14 +79,26 @@ public:
         uint32_t miss_latency;
     } policy{};
 
+    struct Statistics {
+        uint32_t read_cnt;
+        uint32_t write_cnt;
+        uint32_t hit_cnt;
+        uint32_t miss_cnt;
+        uint32_t cycle_cnt;
+    } statistics{};
+
     Cache(MemoryManager *manager, Policy policy, Cache *lower_cache, bool write_back, bool write_allocate);
 
     bool inCache(uint32_t addr);
+
     uint32_t getBlockId(uint32_t addr);
+
     uint8_t getByte(uint32_t addr, uint32_t *cycles);
+
     void setByte(uint32_t addr, uint8_t val, uint32_t *cycles);
 
     void printInfo(bool verbose);
+
     void printStatistics();
 
 };
