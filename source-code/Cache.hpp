@@ -11,11 +11,11 @@
 #include <vector>
 #include "MemoryManager.hpp"
 
+class MemoryManager;
 
-
-class Cache{
+class Cache {
 private:
-    struct History{
+    struct History {
         uint32_t read_num;
         uint32_t write_num;
         uint32_t hit_num;
@@ -23,16 +23,18 @@ private:
         uint32_t cycle_num;
     } history{};
 
-    struct Block{
+    struct Block {
         bool valid{};
         bool dirty{};
-        uint32_t  tag{};
+        uint32_t tag{};
         uint32_t id{};
         uint32_t size{};
         uint32_t last_reference{};
         std::vector<uint8_t> data;
-        Block()= default;
-        Block(const Block &b){
+
+        Block() = default;
+
+        Block(const Block &b) {
             valid = b.valid;
             dirty = b.dirty;
             tag = b.tag;
@@ -93,17 +95,15 @@ public:
 
     uint32_t getBlockId(uint32_t addr);
 
-    uint8_t getByte(uint32_t addr, uint32_t *cycles);
+    uint8_t getByte(uint32_t addr, uint32_t *cycles = nullptr);
 
-    void setByte(uint32_t addr, uint8_t val, uint32_t *cycles);
+    void setByte(uint32_t addr, uint8_t val, uint32_t *cycles = nullptr);
 
-    void printInfo(bool verbose);
+    void printInfo();
 
     void printStatistics();
 
 };
-
-
 
 
 #endif //RISCV_SIMULATOR_CACHE_HPP

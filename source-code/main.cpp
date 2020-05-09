@@ -10,6 +10,7 @@
 #include "MemoryManager.hpp"
 #include "BranchPredictor.hpp"
 #include "Simulator.hpp"
+#include "Cache.hpp"
 
 
 using std::string;
@@ -18,6 +19,7 @@ bool verbose = false;
 bool single_step = false;
 bool dump_history = false;
 char *elf_file_name = nullptr;
+Cache *l1_cache, *l2_cache, *l3_cache;
 BranchPredictor::Strategy strategy = BranchPredictor::Strategy::NT;
 
 
@@ -77,14 +79,6 @@ void printUsage() {
     printf("\t\t           BPB:   Branch Prediction Buffer\n");
 }
 
-
-void printELFInfo(ELFIO::elfio *reader) {
-    printf("---------ELF Info-------------\n");
-
-    printf("---------End ELF Info---------\n");
-}
-
-
 void loadElf(ELFIO::elfio *reader, MemoryManager *memory) {
     ELFIO::Elf_Half seg_num = reader->segments.size();
     if (verbose) {
@@ -117,9 +111,9 @@ void loadElf(ELFIO::elfio *reader, MemoryManager *memory) {
                 memory->addPage(pos);
             }
             if (pos < addr + file_size) {
-                memory->setByte(pos, seg_pointer->get_data()[pos - addr]);
+                memory->setByteNoCache(pos, seg_pointer->get_data()[pos - addr]);
             } else {
-                memory->setByte(pos, 0);
+                memory->setByteNoCache(pos, 0);
             }
         }
 
@@ -136,8 +130,35 @@ int main(int argc, char **argv) {
         printUsage();
         exit(-1);
     }
-
     MemoryManager memory;
+    Cache::Policy policy;
+
+    policy.cache_size = 8 * 1024 * 1024;
+    policy.block_size = 64;
+    policy.block_num = policy.cache_size / policy.block_size;
+    policy.associativity = 8;
+    policy.hit_latency = 19;
+    policy.miss_latency = 100;
+    l3_cache = new Cache(&memory, policy, nullptr, true, true);
+
+    policy.cache_size = 256 * 1024;
+    policy.block_size = 64;
+    policy.block_num = policy.cache_size / policy.block_size;
+    policy.associativity = 8;
+    policy.hit_latency = 7;
+    policy.miss_latency = 20;
+    l2_cache = new Cache(&memory, policy, l3_cache, true, true);
+
+    policy.cache_size = 32 * 1024;
+    policy.block_size = 64;
+    policy.block_num = policy.cache_size / policy.block_size;
+    policy.associativity = 8;
+    policy.hit_latency = 0;
+    policy.miss_latency = 8;
+    l1_cache = new Cache(&memory, policy, l2_cache, true, true);
+
+    memory.setCache(l1_cache);
+
     BranchPredictor branch_predictor(strategy);
     Simulator simulator(&memory, &branch_predictor);
 
@@ -150,7 +171,7 @@ int main(int argc, char **argv) {
     loadElf(&reader, &memory);
 
     if (verbose) {
-        printELFInfo(&reader);
+//        printELFInfo(&reader);
         memory.printInfo();
     }
 
@@ -166,6 +187,9 @@ int main(int argc, char **argv) {
 //    if(dump_history){
 //        simulator.dumpHistory();
 //    }
+    delete l1_cache;
+    delete l2_cache;
+    delete l3_cache;
 
     return 0;
 }

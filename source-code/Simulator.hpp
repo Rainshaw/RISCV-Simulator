@@ -225,7 +225,7 @@ private:
                 out.opcode = RISCV_GRX::OP_BUBBLE;
                 out.inst = RISCV_GRX::UNKNOWN;
                 bubble = stall = false;
-                out.stall_count = 0;
+//                out.stall_count = 0;
             } else if (stall) {
                 stall = false;
             } else {

@@ -22,3 +22,10 @@ add_executable(
         source-code/MemoryManager.cpp
         source-code/Cache.cpp
 )
+
+add_executable(
+        CacheYouhuaSim
+        source-code/CacheYouhuaMain.cpp
+        source-code/MemoryManager.cpp
+        source-code/Cache.cpp
+)

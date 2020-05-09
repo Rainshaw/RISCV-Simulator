@@ -33,11 +33,11 @@ bool Cache::policyValid() const {
         fprintf(stderr, "Block Size Invalid: %d\n", policy.block_size);
         return false;
     }
-    if(policy.block_num * policy.block_size != policy.cache_size){
+    if (policy.block_num * policy.block_size != policy.cache_size) {
         fprintf(stderr, "block_num * block_size != cache_size\n");
         return false;
     }
-    if(policy.block_num % policy.associativity != 0){
+    if (policy.block_num % policy.associativity != 0) {
         fprintf(stderr, "block_num %% associativity != 0\n");
         return false;
     }
@@ -88,11 +88,18 @@ void Cache::loadBlockFromLowerLevel(uint32_t addr, uint32_t *cycles) {
     for (uint32_t i = block_begin_addr; i < block_begin_addr + b.size; i++) {
         if (this->lower_cache == nullptr) {
             b.data[i - block_begin_addr] = this->memory->getByteNoCache(i);
-            if (cycles)
-                *cycles = 100;
         } else {
             b.data[i - block_begin_addr] = this->lower_cache->getByte(i, cycles);
+            if (cycles)
+                *cycles -= this->lower_cache->policy.hit_latency;
         }
+    }
+    if (this->lower_cache == nullptr) {
+        if (cycles)
+            *cycles += this->lower_cache->policy.miss_latency;
+    } else {
+        if (cycles)
+            *cycles += this->lower_cache->policy.hit_latency;
     }
 
     // replace cache
@@ -174,7 +181,7 @@ void Cache::printStatistics() {
     }
 }
 
-void Cache::printInfo(bool verbose) {
+void Cache::printInfo() {
     printf("----------- Cache Info ------------\n");
     printf("Cache Size: %d bytes\n", this->policy.cache_size);
     printf("Block Size: %d bytes\n", this->policy.block_size);
@@ -183,14 +190,13 @@ void Cache::printInfo(bool verbose) {
     printf("Hit Latency: %d\n", this->policy.hit_latency);
     printf("Miss Latency: %d\n", this->policy.miss_latency);
 
-    if (verbose) {
-        for (int i = 0; i < this->blocks.size(); i++) {
-            const Block &b = this->blocks[i];
-            printf("Block %d:\ttag 0x%x\tid %d\t%s\t%s\tlast ref %d\n", i, b.tag, b.id,
-                   b.valid ? "valid" : "invalid",
-                   b.dirty ? "modified" : "unmodified", b.last_reference);
-        }
+    for (int i = 0; i < this->blocks.size(); i++) {
+        const Block &b = this->blocks[i];
+        printf("Block %d:\ttag 0x%x\tid %d\t%s\t%s\tlast ref %d\n", i, b.tag, b.id,
+               b.valid ? "valid" : "invalid",
+               b.dirty ? "modified" : "unmodified", b.last_reference);
     }
+
 }
 
 
@@ -224,17 +230,21 @@ uint8_t Cache::getByte(uint32_t addr, uint32_t *cycles) {
         this->statistics.cycle_cnt += this->policy.hit_latency;
         this->blocks[block_id].last_reference = this->reference_cnt;
         if (cycles)
-            *cycles = this->policy.hit_latency;
+            *cycles += this->policy.hit_latency;
         return this->blocks[block_id].data[offset];
     }
 
     this->statistics.miss_cnt++;
     this->statistics.cycle_cnt += this->policy.miss_latency;
+//    if(cycles)
+//        *cycles += this->policy.miss_latency;
     this->loadBlockFromLowerLevel(addr, cycles);
 
     if ((block_id = this->getBlockId(addr)) != -1) {
         uint32_t offset = this->getOffset(addr);
         this->blocks[block_id].last_reference = this->reference_cnt;
+        if (cycles)
+            *cycles += this->policy.hit_latency;
         return this->blocks[block_id].data[offset];
     } else {
         fprintf(stderr, "Error, data should in top level cache, but it seems not\n");
@@ -271,8 +281,10 @@ void Cache::setByte(uint32_t addr, uint8_t val, uint32_t *cycles) {
     if (!this->write_allocate) {
         if (this->lower_cache == nullptr) {
             this->memory->setByteNoCache(addr, val);
+            if (cycles)
+                *cycles += 100;
         } else {
-            this->lower_cache->setByte(addr, val, nullptr);
+            this->lower_cache->setByte(addr, val, cycles);
         }
     } else {
         this->loadBlockFromLowerLevel(addr, cycles);
@@ -281,6 +293,8 @@ void Cache::setByte(uint32_t addr, uint8_t val, uint32_t *cycles) {
             this->blocks[block_id].dirty = true;
             this->blocks[block_id].last_reference = this->reference_cnt;
             this->blocks[block_id].data[offset] = val;
+            if (cycles)
+                *cycles += this->policy.hit_latency;
             return;
         } else {
             fprintf(stderr, "Error: data should in top level cache, but it seems not\n");

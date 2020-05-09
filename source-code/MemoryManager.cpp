@@ -117,24 +117,29 @@ void MemoryManager::printInfo(){
         if(this->memory[i] == nullptr){
             continue;
         }
-        printf("0x%x-0x%x:\n", i<<22u, (i+1u)<<22u);
-        for(uint16_t j=0; j < 1024; j++){
-            if(this->memory[i][j] == nullptr){
+        printf("0x%x-0x%x:\n", i << 22u, (i + 1u) << 22u);
+        for (uint16_t j = 0; j < 1024; j++) {
+            if (this->memory[i][j] == nullptr) {
                 continue;
             }
-            printf("\t0x%x-0x%x:\n", (i<<22u)+(j<<12u), (i<<22u)+((j+1u)<<12u));
+            printf("\t0x%x-0x%x:\n", (i << 22u) + (j << 12u), (i << 22u) + ((j + 1u) << 12u));
         }
     }
 }
 
+void MemoryManager::printCacheStatistics() {
+    printf("---------Cache Statistics--------\n");
+    this->cache->printStatistics();
+}
 
-bool MemoryManager::copyMemory(void *src, uint32_t dest, uint32_t len){
-    for(uint32_t i=0; i < len; i++){
-        if(!this->addrExist(dest+i)){
+
+bool MemoryManager::copyMemory(void *src, uint32_t dest, uint32_t len) {
+    for (uint32_t i = 0; i < len; i++) {
+        if (!this->addrExist(dest + i)) {
             fprintf(stderr, "Data Copy Unsuccessfully, invalid addr 0x%x!\n", dest + i);
             exit(-1);
         }
-        this->setByte(dest+i, ((uint8_t *)src)[i]);
+        this->setByte(dest + i, ((uint8_t *) src)[i]);
     }
     return true;
 }
@@ -183,7 +188,7 @@ uint8_t MemoryManager::getByte(uint32_t addr, uint32_t *cycles) {
     return this->memory[i][j][k];
 }
 
-uint8_t MemoryManager::getByteNoCache(int addr) {
+uint8_t MemoryManager::getByteNoCache(uint32_t addr) {
     if (!this->addrExist(addr)) {
         fprintf(stderr, "Memory read from invalid addr 0x%x!\n", addr);
         exit(-1);

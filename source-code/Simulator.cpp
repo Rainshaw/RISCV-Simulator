@@ -1099,57 +1099,60 @@ void Simulator::memoryAccess() {
         printf("\tMA: %s ", INSTNAME[inst]);
     }
     int64_t valM = 0;
+    uint32_t cycles = 0;
 
     switch (opcode) {
         case OP_LOAD: {
             history.load_count++;
             switch (func) {
                 case 0x0:
-                    valM = (int64_t) memory->getByte(valE);
+                    valM = (int64_t) memory->getByte(valE, &cycles);
                     break;
                 case 0x1:
-                    valM = (int64_t) memory->getShort(valE);
+                    valM = (int64_t) memory->getShort(valE, &cycles);
                     break;
                 case 0x2:
-                    valM = (int64_t) memory->getInt(valE);
+                    valM = (int64_t) memory->getInt(valE, &cycles);
                     break;
                 case 0x3:
-                    valM = (int64_t) memory->getLong(valE);
+                    valM = (int64_t) memory->getLong(valE, &cycles);
                     break;
                 case 0x4:
-                    valM = (uint64_t) memory->getByte(valE);
+                    valM = (uint64_t) memory->getByte(valE, &cycles);
                     break;
                 case 0x5:
-                    valM = (uint64_t) memory->getInt(valE);
+                    valM = (uint64_t) memory->getInt(valE, &cycles);
                     break;
                 case 0x6:
-                    valE = (uint64_t) memory->getInt(valE);
+                    valE = (uint64_t) memory->getInt(valE, &cycles);
                     break;
                 default:
                     this->raiseError("Invaild LOAD Instruction at %x, The Func Field %x is invaild\n", pc, func);
                     break;
             }
+//            cycles = 100;
             break;
         }
         case OP_STORE:
             history.store_count++;
             switch (func) {
                 case 0x0:
-                    memory->setByte(valE, val2);
+                    memory->setByte(valE, val2, &cycles);
                     break;
                 case 0x1:
-                    memory->setShort(valE, val2);
+                    memory->setShort(valE, val2, &cycles);
                     break;
                 case 0x2:
-                    memory->setInt(valE, val2);
+                    memory->setInt(valE, val2, &cycles);
                     break;
                 case 0x3:
-                    memory->setLong(valE, val2);
+                    memory->setLong(valE, val2, &cycles);
                     break;
                 default:
                     this->raiseError("Invaild READ Instruction at %x, The Func Field %x is invaild\n", pc, func);
                     break;
             }
+//            cycles = 100;
             break;
 
         case OP_RR:
@@ -1169,6 +1172,8 @@ void Simulator::memoryAccess() {
             this->raiseError("Invaild Instruction at %x\n", pc);
             break;
     }
+
+    this->history.cycle_count += cycles;
 
     w_reg.in.opcode = opcode;
     w_reg.in.rd = rd;
@@ -1347,52 +1352,52 @@ void Simulator::run(uint64_t pc) {
 
 //        if (e_reg.out.stall_count == 0) {
 
-            if (e_reg.out.opcode == ECALL && (e_reg.out.val2 == SYS_EXIT || e_reg.out.val2 == SYS_ORIGINAL_EXIT)) {
-                // this shouldn't be achieved but CLion warning is really fucked me!
-                break;
+        if (e_reg.out.opcode == ECALL && (e_reg.out.val2 == SYS_EXIT || e_reg.out.val2 == SYS_ORIGINAL_EXIT)) {
+            // this shouldn't be achieved but CLion warning is really fucked me!
+            break;
+        }
+
+        if (d_reg.out.opcode == OP_JALR) {
+            //间接跳转，需等待计算完成
+            //stall\bubble\normal\normal\normal
+            f_reg.stall = true;
+            d_reg.bubble = true;
+            history.jalr_count++;
+
+            if (is_verbose) {
+                printf("JALR Instruction, set to stall bubble normal normal normal\n");
             }
+        }
 
-            if (d_reg.out.opcode == OP_JALR) {
-                //间接跳转，需等待计算完成
-                //stall\bubble\normal\normal\normal
-                f_reg.stall = true;
-                d_reg.bubble = true;
-                history.jalr_count++;
 
-                if (is_verbose) {
-                    printf("JALR Instruction, set to stall bubble normal normal normal\n");
-                }
+        if (e_reg.out.opcode == OP_BRANCH &&
+            (bypass.e_valE ^ branch_predictor->predict(e_reg.out.pc, e_reg.out.imm))) {
+            //e_reg为分支指令且
+            //使用BranchPredictor预测出错
+            //设置为 stall bubble bubble normal normal
+            f_reg.stall = true;
+            d_reg.bubble = true;
+            e_reg.bubble = true;
+
+            if (is_verbose) {
+                printf("Predict Branch Unsuccessful, set to stall, bubble, bubble, normal, normal\n");
             }
+        }
 
 
-            if (e_reg.out.opcode == OP_BRANCH &&
-                (bypass.e_valE ^ branch_predictor->predict(e_reg.out.pc, e_reg.out.imm))) {
-                //e_reg为分支指令且
-                //使用BranchPredictor预测出错
-                //设置为 stall bubble bubble normal normal
-                f_reg.stall = true;
-                d_reg.bubble = true;
-                e_reg.bubble = true;
+        if (e_reg.out.opcode == OP_LOAD && (e_reg.out.rd == d_reg.out.rs1 || e_reg.out.rd == d_reg.out.rs2)) {
+            //e_reg为LOAD指令且
+            //d_reg的pc指令使用了e_reg目标寄存器的值
+            //产生数据冒险 stall stall bubble normal normal
+            f_reg.stall = true;
+            d_reg.stall = true;
+            e_reg.bubble = true;
+            history.data_hazard_count++;
 
-                if (is_verbose) {
-                    printf("Predict Branch Unsuccessful, set to stall, bubble, bubble, normal, normal\n");
-                }
+            if (is_verbose) {
+                printf("Load Instruction cause data hazard, set to stall, stall, bubble, normal, normal\n");
             }
-
-
-            if (e_reg.out.opcode == OP_LOAD && (e_reg.out.rd == d_reg.out.rs1 || e_reg.out.rd == d_reg.out.rs2)) {
-                //e_reg为LOAD指令且
-                //d_reg的pc指令使用了e_reg目标寄存器的值
-                //产生数据冒险 stall stall bubble normal normal
-                f_reg.stall = true;
-                d_reg.stall = true;
-                e_reg.bubble = true;
-                history.data_hazard_count++;
-
-                if (is_verbose) {
-                    printf("Load Instruction cause data hazard, set to stall, stall, bubble, normal, normal\n");
-                }
-            }
+        }
 //        } else {
 //            e_reg.stall = true;
 //            d_reg.stall = true;
@@ -1422,7 +1427,7 @@ void Simulator::run(uint64_t pc) {
         if (is_single_step) {
             printf("Press d to dump memory into dump_memory.txt, press else to continue: ");
             char ch;
-            ch = (char)getchar();
+            ch = (char) getchar();
             if (ch == 'd') {
                 this->dumpHistory();
             }
