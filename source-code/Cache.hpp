@@ -56,9 +56,9 @@ private:
 
     void initCache();
 
-    void loadBlockFromLowerLevel(uint32_t addr, uint32_t *cycles);
+    void loadBlockFromLowerLevel(uint32_t addr, uint32_t *cycles = nullptr);
 
-    void writeBlockToLowerLevel(Block &b);
+    void writeBlockToLowerLevel(Block &b, uint32_t *cycles = nullptr);
 
     uint32_t getReplacementBlockId(uint32_t begin, uint32_t end);
 
@@ -78,7 +78,7 @@ public:
         uint32_t block_num;
         uint32_t associativity;
         uint32_t hit_latency;
-        uint32_t miss_latency;
+//        uint32_t miss_latency;
     } policy{};
 
     struct Statistics {
@@ -97,7 +97,11 @@ public:
 
     uint8_t getByte(uint32_t addr, uint32_t *cycles = nullptr);
 
+    uint8_t getByteCopy(uint32_t addr, uint32_t *cycles = nullptr);
+
     void setByte(uint32_t addr, uint8_t val, uint32_t *cycles = nullptr);
+
+    void setByteCopy(uint32_t addr, uint8_t val, uint32_t *cycles = nullptr);
 
     void printInfo();
 

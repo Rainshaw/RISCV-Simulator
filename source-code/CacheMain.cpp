@@ -50,7 +50,7 @@ void cacheSimulate(std::ofstream &out, uint32_t cache_size, uint32_t block_size,
     policy.associativity = associativity;
     policy.block_num = cache_size / block_size;
     policy.hit_latency = 1;
-    policy.miss_latency = 8;
+//    policy.miss_latency = 8;
 
     auto *memory = new MemoryManager();
     auto *cache = new Cache(memory, policy, nullptr, write_back, write_allocate);

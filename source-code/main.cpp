@@ -138,7 +138,7 @@ int main(int argc, char **argv) {
     policy.block_num = policy.cache_size / policy.block_size;
     policy.associativity = 8;
     policy.hit_latency = 19;
-    policy.miss_latency = 100;
+//    policy.miss_latency = 100;
     l3_cache = new Cache(&memory, policy, nullptr, true, true);
 
     policy.cache_size = 256 * 1024;
@@ -146,7 +146,7 @@ int main(int argc, char **argv) {
     policy.block_num = policy.cache_size / policy.block_size;
     policy.associativity = 8;
     policy.hit_latency = 7;
-    policy.miss_latency = 20;
+//    policy.miss_latency = 20;
     l2_cache = new Cache(&memory, policy, l3_cache, true, true);
 
     policy.cache_size = 32 * 1024;
@@ -154,7 +154,7 @@ int main(int argc, char **argv) {
     policy.block_num = policy.cache_size / policy.block_size;
     policy.associativity = 8;
     policy.hit_latency = 0;
-    policy.miss_latency = 8;
+//    policy.miss_latency = 8;
     l1_cache = new Cache(&memory, policy, l2_cache, true, true);
 
     memory.setCache(l1_cache);

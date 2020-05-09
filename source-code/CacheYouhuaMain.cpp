@@ -71,7 +71,6 @@ int main(int argc, char **argv) {
         policy.block_num = policy.cache_size / policy.block_size;
         policy.associativity = 8;
         policy.hit_latency = 10;
-        policy.miss_latency = 100;
         l2_cache = new Cache(&memory, policy, nullptr, true, true);
 
         policy.cache_size = 32 * 1024;
@@ -79,7 +78,6 @@ int main(int argc, char **argv) {
         policy.block_num = policy.cache_size / policy.block_size;
         policy.associativity = 8;
         policy.hit_latency = 3;
-        policy.miss_latency = 10;
         l1_cache = new Cache(&memory, policy, l2_cache, true, true);
 
         memory.setCache(l1_cache);
@@ -122,8 +120,8 @@ int main(int argc, char **argv) {
         delete l1_cache;
     }
 
-    printf("Average l1_cache miss rate: %f\n", l1_miss_rate);
-    printf("Average l2_cache miss rate: %f\n", l2_miss_rate);
+    printf("Average l1_cache miss rate: %f\n", l1_miss_rate / loop);
+    printf("Average l2_cache miss rate: %f\n", l2_miss_rate / loop);
 
     return 0;
 }
