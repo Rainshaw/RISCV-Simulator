@@ -12,6 +12,7 @@
 
 bool verbose = false;
 bool single_step = false;
+uint32_t mct_size = 8;
 char *trace_file_name = nullptr;
 uint32_t loop = 100;
 Cache *l1_cache, *l2_cache;
@@ -32,6 +33,7 @@ bool parsePara(int argc, char **argv) {
 //        } else {
     trace_file_name = argv[1];
     loop = atoi(argv[2]);
+    mct_size = atoi(argv[3]);
 //        }
 //    }
 
@@ -71,16 +73,21 @@ int main(int argc, char **argv) {
         policy.block_num = policy.cache_size / policy.block_size;
         policy.associativity = 8;
         policy.hit_latency = 10;
-        l2_cache = new Cache(&memory, policy, nullptr, true, true);
+        l2_cache = new Cache(&memory, policy, nullptr, true, true, mct_size);
 
         policy.cache_size = 32 * 1024;
         policy.block_size = 64;
         policy.block_num = policy.cache_size / policy.block_size;
         policy.associativity = 8;
         policy.hit_latency = 3;
-        l1_cache = new Cache(&memory, policy, l2_cache, true, true);
+        l1_cache = new Cache(&memory, policy, l2_cache, true, true, mct_size);
 
         memory.setCache(l1_cache);
+
+        l2_cache->replace_policy = Cache::ReplacePolicy::PLRU;
+        l1_cache->replace_policy = Cache::ReplacePolicy::PLRU;
+        l1_cache->bypass = false;
+        l2_cache->bypass = true;
 
         char type;
         uint32_t addr;
@@ -110,7 +117,7 @@ int main(int argc, char **argv) {
                 getchar();
             }
         }
-        memory.printCacheStatistics();
+        //memory.printCacheStatistics();
         l1_miss_rate +=
                 (double) l1_cache->statistics.miss_cnt / (l1_cache->statistics.hit_cnt + l1_cache->statistics.miss_cnt);
         l2_miss_rate +=
@@ -119,9 +126,14 @@ int main(int argc, char **argv) {
         delete l2_cache;
         delete l1_cache;
     }
+    l1_miss_rate /= loop;
+    l2_miss_rate /= loop;
 
-    printf("Average l1_cache miss rate: %f\n", l1_miss_rate / loop);
-    printf("Average l2_cache miss rate: %f\n", l2_miss_rate / loop);
+    printf("Average l1_cache miss rate: %f\n", l1_miss_rate);
+    printf("Average l2_cache miss rate: %f\n", l2_miss_rate);
+    auto amat = (1 - l1_miss_rate) * l1_cache->policy.hit_latency +
+                l1_miss_rate * ((1 - l2_miss_rate) * l2_cache->policy.hit_latency + l2_miss_rate * 100);
+    printf("AMAT: %f\n", amat);
 
     return 0;
 }

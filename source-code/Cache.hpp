@@ -15,13 +15,6 @@ class MemoryManager;
 
 class Cache {
 private:
-    struct History {
-        uint32_t read_num;
-        uint32_t write_num;
-        uint32_t hit_num;
-        uint32_t miss_num;
-        uint32_t cycle_num;
-    } history{};
 
     struct Block {
         bool valid{};
@@ -60,7 +53,13 @@ private:
 
     void writeBlockToLowerLevel(Block &b, uint32_t *cycles = nullptr);
 
-    uint32_t getReplacementBlockId(uint32_t begin, uint32_t end);
+    uint32_t getReplacementBlockId(uint32_t set_id);
+
+    void PLRUUpdate(uint32_t block_id);
+
+    void MCTUpdate(uint32_t block_id, uint32_t tag);
+
+    bool cacheSetFull(uint32_t id) const;
 
     uint32_t getTag(uint32_t addr) const;
 
@@ -81,6 +80,19 @@ public:
 //        uint32_t miss_latency;
     } policy{};
 
+    enum ReplacePolicy {
+        LRU = 0,
+        RANDOM = 1,
+        PLRU = 2,
+    } replace_policy = LRU;
+    int **plru_bit{};
+
+    bool bypass = false;
+    uint64_t **mct{};
+    uint32_t mct_size = 0;
+
+    bool prefetch = false;
+
     struct Statistics {
         uint32_t read_cnt;
         uint32_t write_cnt;
@@ -89,7 +101,8 @@ public:
         uint32_t cycle_cnt;
     } statistics{};
 
-    Cache(MemoryManager *manager, Policy policy, Cache *lower_cache, bool write_back, bool write_allocate);
+    Cache(MemoryManager *manager, Policy policy, Cache *lower_cache, bool write_back = true,
+          bool write_allocate = true, uint32_t mct_size = 0);
 
     bool inCache(uint32_t addr);
 

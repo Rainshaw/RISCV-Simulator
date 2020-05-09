@@ -52,25 +52,66 @@ void Cache::initCache() {
         b.id = i / policy.associativity;
         b.data = std::vector<uint8_t>(b.size);
     }
+    this->plru_bit = new int *[this->policy.block_num / this->policy.associativity];
+    for (uint32_t i = 0; i < this->policy.block_num / this->policy.associativity; i++) {
+        this->plru_bit[i] = new int[this->policy.associativity];
+        for (uint32_t j = 0; j < this->policy.associativity; j++) {
+            this->plru_bit[i][j] = 0;
+        }
+    }
+    this->mct = new uint64_t *[this->policy.block_num / this->policy.associativity];
+    for (uint32_t i = 0; i < this->policy.block_num / this->policy.associativity; i++) {
+        this->mct[i] = new uint64_t[this->mct_size];
+        for (uint32_t j = 0; j < this->mct_size; j++) {
+            this->mct[i][j] = (uint64_t) -1;
+        }
+    }
+
 }
 
-uint32_t Cache::getReplacementBlockId(uint32_t begin, uint32_t end) {
+bool Cache::cacheSetFull(uint32_t set_id) const {
+    uint32_t begin = set_id * this->policy.associativity;
+    uint32_t end = begin + this->policy.associativity;
+    for (uint32_t i = begin; i < end; i++) {
+        if (!this->blocks[i].valid)
+            return false;
+    }
+    return true;
+}
+
+
+uint32_t Cache::getReplacementBlockId(uint32_t set_id) {
+    uint32_t begin = set_id * this->policy.associativity;
+    uint32_t end = begin + this->policy.associativity;
     // 空的
     for (uint32_t i = begin; i < end; i++) {
         if (!this->blocks[i].valid)
             return i;
     }
 
-    // LRU
-    uint32_t min_reference = this->blocks[begin].last_reference;
-    uint32_t return_id = begin;
-    for (uint32_t i = begin; i < end; i++) {
-        if (this->blocks[i].last_reference < min_reference) {
-            return_id = i;
-            min_reference = this->blocks[i].last_reference;
+    if (this->replace_policy == Cache::ReplacePolicy::LRU) {
+        // LRU
+        uint32_t min_reference = this->blocks[begin].last_reference;
+        uint32_t return_id = begin;
+        for (uint32_t i = begin; i < end; i++) {
+            if (this->blocks[i].last_reference < min_reference) {
+                return_id = i;
+                min_reference = this->blocks[i].last_reference;
+            }
         }
+        return return_id;
+    } else if (this->replace_policy == Cache::ReplacePolicy::RANDOM) {
+        // RANDOM
+        return begin + rand() % (end - begin);
+    } else {
+        //PLRU
+        int node, res = 0, base;
+        for (node = 1, base = 1; node < this->policy.associativity; base *= 2) {
+            res += base * plru_bit[set_id][node];
+            node = node * 2 + plru_bit[set_id][node];
+        }
+        return res + begin;
     }
-    return return_id;
 }
 
 void Cache::loadBlockFromLowerLevel(uint32_t addr, uint32_t *cycles) {
@@ -106,14 +147,31 @@ void Cache::loadBlockFromLowerLevel(uint32_t addr, uint32_t *cycles) {
     }
 
     // replace cache
-    uint32_t block_begin = b.id * this->policy.associativity;
-    uint32_t block_end = block_begin + this->policy.associativity;
-    uint32_t replace_id = this->getReplacementBlockId(block_begin, block_end);
+
+    uint32_t replace_id = this->getReplacementBlockId(b.id);
     Block replace_block = this->blocks[replace_id];
     if (this->write_back && replace_block.valid && replace_block.dirty) {
         this->writeBlockToLowerLevel(replace_block, cycles);
     }
     this->blocks[replace_id] = b;
+}
+
+void Cache::PLRUUpdate(uint32_t block_id) {
+    uint32_t set_id = block_id / this->policy.associativity;
+    uint32_t id2 = block_id % this->policy.associativity;
+    int node, tmp;
+    for (node = 1, tmp = id2; node < this->policy.associativity;) {
+        plru_bit[set_id][node] = tmp % 2 == 0 ? 1 : 0;
+        node = node * 2 + tmp % 2;
+        tmp /= 2;
+    }
+}
+
+void Cache::MCTUpdate(uint32_t id, uint32_t addr) {
+    for (uint32_t i = this->mct_size - 1; i > 0; i--) {
+        mct[id][i] = mct[id][i - 1];
+    }
+    mct[id][0] = this->getTag(addr);
 }
 
 void Cache::writeBlockToLowerLevel(Block &b, uint32_t *cycles) {
@@ -166,8 +224,10 @@ uint32_t Cache::getAddr(Block &b) const {
 }
 
 
-Cache::Cache(MemoryManager *manager, Policy policy, Cache *lower_cache, bool write_back, bool write_allocate) {
+Cache::Cache(MemoryManager *manager, Policy policy, Cache *lower_cache,
+             bool write_back, bool write_allocate, uint32_t mct_size) {
     this->memory = manager;
+    this->mct_size = mct_size;
     this->policy = policy;
     this->lower_cache = lower_cache;
     this->reference_cnt = 0;
@@ -240,6 +300,7 @@ uint8_t Cache::getByte(uint32_t addr, uint32_t *cycles) {
         uint32_t offset = this->getOffset(addr);
         this->statistics.hit_cnt++;
         this->statistics.cycle_cnt += this->policy.hit_latency;
+        this->PLRUUpdate(block_id);
         this->blocks[block_id].last_reference = this->reference_cnt;
         if (cycles)
             *cycles += this->policy.hit_latency;
@@ -247,10 +308,40 @@ uint8_t Cache::getByte(uint32_t addr, uint32_t *cycles) {
     }
 
     this->statistics.miss_cnt++;
+    if (this->bypass) {
+        if (this->cacheSetFull(getId(addr))) {
+            bool next_level = true;
+            uint32_t set_id = getId(addr);
+            uint32_t tag = getTag(addr);
+            for (int tmp = 0; tmp < this->mct_size; tmp++) {
+                if (mct[set_id][tmp] == (uint64_t) -1 || mct[set_id][tmp] == tag) {
+                    next_level = false;
+                    break;
+                }
+            }
+            if (next_level) {
+                uint8_t res;
+                if (this->lower_cache == nullptr) {
+                    if (cycles)
+                        *cycles += 100;
+                    this->statistics.cycle_cnt += 100;
+                    res = this->memory->getByteNoCache(addr);
+                } else {
+                    this->statistics.cycle_cnt += this->lower_cache->policy.hit_latency;
+                    res = this->lower_cache->getByte(addr, cycles);
+                }
+                MCTUpdate(getId(addr), addr);
+                return res;
+            }
+        }
+        MCTUpdate(getId(addr), addr);
+    }
+
     this->loadBlockFromLowerLevel(addr, cycles);
 
     if ((block_id = this->getBlockId(addr)) != -1) {
         uint32_t offset = this->getOffset(addr);
+        this->PLRUUpdate(block_id);
         this->blocks[block_id].last_reference = this->reference_cnt;
         return this->blocks[block_id].data[offset];
     } else {
@@ -286,6 +377,7 @@ void Cache::setByte(uint32_t addr, uint8_t val, uint32_t *cycles) {
         this->statistics.hit_cnt++;
         this->statistics.cycle_cnt += this->policy.hit_latency;
         this->blocks[block_id].dirty = true;
+        this->PLRUUpdate(block_id);
         this->blocks[block_id].last_reference = this->reference_cnt;
         this->blocks[block_id].data[offset] = val;
         if (!this->write_back) {
@@ -293,7 +385,7 @@ void Cache::setByte(uint32_t addr, uint8_t val, uint32_t *cycles) {
 //            this->statistics.cycle_cnt += this->policy.miss_latency;
         }
         if (cycles) {
-            *cycles = this->policy.hit_latency;
+            *cycles += this->policy.hit_latency;
         }
         return;
     }
@@ -313,10 +405,38 @@ void Cache::setByte(uint32_t addr, uint8_t val, uint32_t *cycles) {
                 this->statistics.cycle_cnt += *cycles;
         }
     } else {
+        if (this->bypass) {
+            if (this->cacheSetFull(getId(addr))) {
+                bool next_level = true;
+                uint32_t set_id = getId(addr);
+                uint32_t tag = getTag(addr);
+                for (int tmp = 0; tmp < this->mct_size; tmp++) {
+                    if (mct[set_id][tmp] == (uint64_t) -1 || mct[set_id][tmp] == tag) {
+                        next_level = false;
+                        break;
+                    }
+                }
+                if (next_level) {
+                    if (this->lower_cache == nullptr) {
+                        if (cycles)
+                            *cycles += 100;
+                        this->statistics.cycle_cnt += 100;
+                        this->memory->setByteNoCache(addr, val);
+                    } else {
+                        this->statistics.cycle_cnt += this->lower_cache->policy.hit_latency;
+                        this->lower_cache->setByte(addr, val, cycles);
+                    }
+                    MCTUpdate(getId(addr), addr);
+                    return;
+                }
+            }
+            MCTUpdate(getId(addr), addr);
+        }
         this->loadBlockFromLowerLevel(addr, cycles);
         if ((block_id = this->getBlockId(addr)) != -1) {
             uint32_t offset = this->getOffset(addr);
             this->blocks[block_id].dirty = true;
+            this->PLRUUpdate(block_id);
             this->blocks[block_id].last_reference = this->reference_cnt;
             this->blocks[block_id].data[offset] = val;
 //            if (cycles)
