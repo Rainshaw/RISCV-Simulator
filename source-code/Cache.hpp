@@ -57,7 +57,9 @@ private:
 
     void PLRUUpdate(uint32_t block_id);
 
-    void MCTUpdate(uint32_t block_id, uint32_t tag);
+    void MCTUpdate(uint32_t block_id, uint32_t addr);
+
+    void preFetch(uint32_t addr);
 
     bool cacheSetFull(uint32_t id) const;
 
@@ -91,7 +93,9 @@ public:
     uint64_t **mct{};
     uint32_t mct_size = 0;
 
-    bool prefetch = false;
+    bool pre_fetch = false;
+    uint32_t pre_fetch_num = 0;
+
 
     struct Statistics {
         uint32_t read_cnt;

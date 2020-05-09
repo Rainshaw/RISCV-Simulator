@@ -338,6 +338,8 @@ uint8_t Cache::getByte(uint32_t addr, uint32_t *cycles) {
     }
 
     this->loadBlockFromLowerLevel(addr, cycles);
+    if (this->pre_fetch)
+        preFetch(addr);
 
     if ((block_id = this->getBlockId(addr)) != -1) {
         uint32_t offset = this->getOffset(addr);
@@ -433,6 +435,8 @@ void Cache::setByte(uint32_t addr, uint8_t val, uint32_t *cycles) {
             MCTUpdate(getId(addr), addr);
         }
         this->loadBlockFromLowerLevel(addr, cycles);
+        if (this->pre_fetch)
+            preFetch(addr);
         if ((block_id = this->getBlockId(addr)) != -1) {
             uint32_t offset = this->getOffset(addr);
             this->blocks[block_id].dirty = true;
@@ -482,3 +486,57 @@ void Cache::setByteCopy(uint32_t addr, uint8_t val, uint32_t *cycles) {
     }
 }
 
+void Cache::preFetch(uint32_t begin_addr) {
+    for (uint32_t addr = begin_addr + this->policy.block_size;
+         addr <= begin_addr + this->policy.block_size * this->pre_fetch_num; addr += this->policy.block_size) {
+        if (inCache(addr) || !this->memory->pageExist(addr))
+            continue;
+        uint32_t set_id = getId(addr);
+        if (bypass) {
+            if (this->cacheSetFull(set_id)) {
+                bool next_level = true;
+                uint32_t tag = getTag(addr);
+                for (int tmp = 0; tmp < this->mct_size; tmp++) {
+                    if (mct[set_id][tmp] == (uint64_t) -1 || mct[set_id][tmp] == tag) {
+                        next_level = false;
+                        break;
+                    }
+                }
+                if (next_level) {
+                    MCTUpdate(set_id, addr);
+                    continue;
+                }
+            }
+            MCTUpdate(set_id, addr);
+        }
+
+        Block b;
+        b.valid = true;
+        b.dirty = false;
+        b.tag = this->getTag(addr);
+        b.id = this->getId(addr);
+        b.size = this->policy.block_size;
+        b.data = vector<uint8_t>(b.size);
+        uint32_t bits = log2(b.size);
+        uint32_t mask = ~((1 << bits) - 1);
+        uint32_t block_begin_addr = addr & mask;
+        for (uint32_t i = block_begin_addr; i < block_begin_addr + b.size; i++) {
+            if (this->lower_cache == nullptr) {
+                b.data[i - block_begin_addr] = this->memory->getByteNoCache(i);
+            } else {
+                if (i == block_begin_addr)
+                    b.data[i - block_begin_addr] = this->lower_cache->getByte(i);
+                else
+                    b.data[i - block_begin_addr] = this->lower_cache->getByteCopy(i);
+            }
+        }
+        // replace cache
+
+        uint32_t replace_id = this->getReplacementBlockId(b.id);
+        Block replace_block = this->blocks[replace_id];
+        if (this->write_back && replace_block.valid && replace_block.dirty) {
+            this->writeBlockToLowerLevel(replace_block);
+        }
+        this->blocks[replace_id] = b;
+    }
+}

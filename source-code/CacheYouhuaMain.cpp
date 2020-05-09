@@ -88,6 +88,10 @@ int main(int argc, char **argv) {
         l1_cache->replace_policy = Cache::ReplacePolicy::PLRU;
         l1_cache->bypass = false;
         l2_cache->bypass = true;
+        l1_cache->pre_fetch = true;
+        l2_cache->pre_fetch = true;
+        l1_cache->pre_fetch_num = 4;
+        l2_cache->pre_fetch_num = 4;
 
         char type;
         uint32_t addr;
