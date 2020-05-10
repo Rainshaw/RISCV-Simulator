@@ -178,6 +178,7 @@ void Cache::writeBlockToLowerLevel(Block &b, uint32_t *cycles) {
     uint32_t addr_begin = this->getAddr(b);
 
     if (this->lower_cache == nullptr) {
+        this->statistics.cycle_cnt += 100;
         if (cycles) {
             *cycles += 100;
         }
@@ -194,6 +195,7 @@ void Cache::writeBlockToLowerLevel(Block &b, uint32_t *cycles) {
         if (cycles) {
             *cycles += this->lower_cache->policy.hit_latency;
         }
+        this->statistics.cycle_cnt += this->lower_cache->policy.hit_latency;
     }
 }
 

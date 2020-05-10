@@ -18,10 +18,10 @@ dir=riscv-elf/rv64im
 ./Sim ../$dir/others/test_arithmetic.riscv
 ./Sim ../$dir/others/test_branch.riscv
 
-./CacheSim ../cache-trace2/1.trace
-./CacheSim ../cache-trace2/2.trace
-./CacheSim ../cache-trace2/01-mcf-gem5-xcg.trace
-./CacheSim ../cache-trace2/02-stream-gem5-xaa.trace
+#./CacheSim ../cache-trace/1.trace
+#./CacheSim ../cache-trace/2.trace
+#./CacheSim ../cache-trace/01-mcf-gem5-xcg.trace
+#./CacheSim ../cache-trace/02-stream-gem5-xaa.trace
 
 
 #./CacheYouhuaSim ../cache-trace2/01-mcf-gem5-xcg.trace 10 1

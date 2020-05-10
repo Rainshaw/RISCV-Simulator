@@ -90,7 +90,7 @@ void cacheSimulate(std::ofstream &out, uint32_t cache_size, uint32_t block_size,
             getchar();
         }
     }
-    cache->printStatistics();
+//    cache->printStatistics();
     double miss_rate = (double) cache->statistics.miss_cnt / (cache->statistics.hit_cnt + cache->statistics.miss_cnt);
     out << cache_size << "," << block_size << "," << associativity << "," << write_back << "," << write_allocate << ","
         << miss_rate << "," << cache->statistics.cycle_cnt << std::endl;
