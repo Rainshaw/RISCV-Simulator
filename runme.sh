@@ -3,20 +3,20 @@ cd build || exit
 cmake ..
 make
 
-dir=riscv-elf/rv64im
+#dir=riscv-elf/rv64im
 
-./Sim ../$dir/inclass/add.riscv
-./Sim ../$dir/inclass/mul-div.riscv
-./Sim ../$dir/inclass/n!.riscv
-./Sim ../$dir/inclass/qsort.riscv
-./Sim ../$dir/inclass/simple-function.riscv
-
-./Sim ../$dir/others/ackermann.riscv
-./Sim ../$dir/others/helloworld.riscv
-./Sim ../$dir/others/matrixmulti.riscv
-./Sim ../$dir/others/quicksort.riscv
-./Sim ../$dir/others/test_arithmetic.riscv
-./Sim ../$dir/others/test_branch.riscv
+#./Sim ../$dir/inclass/add.riscv
+#./Sim ../$dir/inclass/mul-div.riscv
+#./Sim ../$dir/inclass/n!.riscv
+#./Sim ../$dir/inclass/qsort.riscv
+#./Sim ../$dir/inclass/simple-function.riscv
+#
+#./Sim ../$dir/others/ackermann.riscv
+#./Sim ../$dir/others/helloworld.riscv
+#./Sim ../$dir/others/matrixmulti.riscv
+#./Sim ../$dir/others/quicksort.riscv
+#./Sim ../$dir/others/test_arithmetic.riscv
+#./Sim ../$dir/others/test_branch.riscv
 
 #./CacheSim ../cache-trace/1.trace
 #./CacheSim ../cache-trace/2.trace
@@ -43,3 +43,12 @@ dir=riscv-elf/rv64im
 #./CacheYouhuaSim ../cache-trace2/02-stream-gem5-xaa.trace 10 128
 #./CacheYouhuaSim ../cache-trace2/02-stream-gem5-xaa.trace 10 256
 #./CacheYouhuaSim ../cache-trace2/02-stream-gem5-xaa.trace 10
+
+./YuvImageProcessor -i BASIC ../yuv-file/dem1.yuv
+./YuvImageProcessor -i MMX ../yuv-file/dem1.yuv
+./YuvImageProcessor -i SSE2 ../yuv-file/dem1.yuv
+./YuvImageProcessor -i AVX ../yuv-file/dem1.yuv
+./YuvImageProcessor -i BASIC ../yuv-file/dem2.yuv
+./YuvImageProcessor -i MMX ../yuv-file/dem2.yuv
+./YuvImageProcessor -i SSE2 ../yuv-file/dem2.yuv
+./YuvImageProcessor -i AVX ../yuv-file/dem2.yuv

@@ -36,7 +36,7 @@
 
 如图所示，为固定Block Size 为64Byte，Miss Rate随Associativity的变化趋势。可以看出，绝大多数情况，随着associativity的增大，Miss Rate也会逐渐减小至一稳定值。
 
-## Write Through, Write Back, Write Allocate和 No-write Allocate访问延时差异
+### Write Through, Write Back, Write Allocate和 No-write Allocate访问延时差异
 
 ![](../assets/01-mcf-gem5-xcg-3.png)
 

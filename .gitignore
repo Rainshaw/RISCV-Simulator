@@ -2,3 +2,6 @@
 /cmake-build-debug/
 .idea
 /build/
+yuv-file/*.yuv
+!yuv-file/dem1.yuv
+!yuv-file/dem2.yuv
