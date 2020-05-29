@@ -153,8 +153,7 @@ void printUsage() {
 }
 
 void BasicProcessor() {
-    int total = width * height;
-    auto *data = new Pixel[total];
+    auto *data = new Pixel[size];
     for (int i = 0; i < height; i++) {
         for (int j = 0; j < width; j++) {
             int offset = i * width + j;
