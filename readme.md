@@ -36,4 +36,4 @@ There are a number of reference RISC-V ELFs and its corresponding assembly code 
 
 相关报告在`docs`文件夹下
 
-同时， 你可以从我的[博客](https://blog.ruixiaolu.com/archives/2020/04/11/59.html)上获得更好的阅读体验。
+同时， 你可以从我的[博客](https://blog.ruixiaolu.com/)上获得更好的阅读体验。
